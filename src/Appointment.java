@@ -7,11 +7,12 @@ public class Appointment {
     private String time;
     private String servicetype;
     private double price;
+    private String vehicleDetails;
     private String comments;
     private String status;
 
     // Constructor
-    public Appointment(String appointmentid, String customerid, String technicianid, String counterstaffid, String date, String time, String servicetype, double price, String comments, String status) {
+    public Appointment(String appointmentid, String customerid, String technicianid, String counterstaffid, String date, String time, String servicetype, double price, String vehicleDetails, String comments, String status) {
         this.appointmentid = appointmentid;
         this.customerid = customerid;
         this.technicianid = technicianid;
@@ -20,6 +21,7 @@ public class Appointment {
         this.time = time;
         this.servicetype = servicetype;
         this.price = price;
+        this.vehicleDetails = vehicleDetails;
         this.comments = comments;
         this.status = status;
     }
@@ -33,6 +35,7 @@ public class Appointment {
     public String getTime() { return time; }
     public String getServicetype() { return servicetype; }
     public double getPrice() { return price; }
+    public String getVehicleDetails() { return vehicleDetails; }
     public String getComments() { return comments; }
     public String getStatus() { return status; }
 
@@ -45,6 +48,7 @@ public class Appointment {
     public void setTime(String time) { this.time = time; }
     public void setServicetype(String servicetype) { this.servicetype = servicetype; }
     public void setPrice(double price) { this.price = price; }
+    public void setVehicleDetails(String vehicleDetails) { this.vehicleDetails = vehicleDetails; }
     public void setComments(String comments) { this.comments = comments; }
     public void setStatus(String status) { this.status = status; }
 }
