@@ -54,4 +54,19 @@ public class Appointment {
     public void setVehicleDetails(String vehicleDetails) { this.vehicleDetails = vehicleDetails; }
     public void setComments(String comments) { this.comments = comments; }
     public void setStatus(String status) { this.status = status; }
+    
+         @Override
+    
+public String toString(){
+    return appointmentid + "," + 
+           customerid + "," + 
+           technicianid + "," +
+           counterstaffid + "," +
+           date + "," +
+           time + "," +
+           servicetype + "," +
+           price + "," +
+           comments + "," +
+           status;
 }
+    }
