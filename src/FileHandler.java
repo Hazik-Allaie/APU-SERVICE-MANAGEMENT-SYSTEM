@@ -4,7 +4,7 @@ public class FileHandler {
     public static void saveuser(User user){
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter("user.txt",true));
-            bw.write(user.getUserid() + "," + user.getName()+","+ user.getAge()+","+ user.getEmail()+","+ user.getUsername() +user.getPassword()+"," + user.getContact()+","+ user.getRole() );
+            bw.write(user.getUserid() + "," + user.getName()+","+ user.getAge()+","+ user.getEmail()+","+ user.getUsername()+ "," + user.getPassword()+"," + user.getContact()+","+ user.getRole() );
             bw.newLine(); // moves to next line
             bw.close();   // closes the file
         }
@@ -31,9 +31,10 @@ public class FileHandler {
             parts[7]                     //role
             );
             users.add(user);
-            br.close(); 
+            
             
         }
+        br.close(); 
         }
         catch (IOException e){
         System.out.println("Error :" + e.getMessage());}
