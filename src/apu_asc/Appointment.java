@@ -1,3 +1,6 @@
+package apu_asc;
+
+
 public class Appointment {
     private String appointmentid;
     private String customerid;

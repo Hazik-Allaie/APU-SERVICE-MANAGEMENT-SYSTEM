@@ -1,5 +1,7 @@
+package apu_asc;
 
-public class User {
+
+public abstract class User {
     private String userid;
     private String name;
     private int age ;
@@ -74,5 +76,14 @@ this.role=role;}
     
     public void setRole(String role){
     this.role=role;}
+    
+    public abstract void displayMenu();
+    
+        @Override
+    public String toString() {
+        return userid + "," + name + "," + age + "," + 
+               email + "," + username + "," + password + "," + 
+               contact + "," + role;
+    }
     
 }

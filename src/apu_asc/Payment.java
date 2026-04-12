@@ -1,3 +1,5 @@
+package apu_asc;
+
 public class Payment {
     private String paymentId;
     private String appointmentId;
