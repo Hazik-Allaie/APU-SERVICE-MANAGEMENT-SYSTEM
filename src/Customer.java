@@ -1,12 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 
-/**
- *
- * @author HAZIK
- */
-public class Customer {
-    
+public class Customer extends User {
+      public Customer(String userid, String name, int age, String email, String username, String password, String contact) {
+        super(userid, name, age, email, username, password, contact, "Customer ");
+    }
 }

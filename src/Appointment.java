@@ -1,7 +1,6 @@
-
 public class Appointment {
-    private String appointmentid ;
-    private final String customerid;
+    private String appointmentid;
+    private String customerid;
     private String technicianid;
     private String counterstaffid;
     private String date;
@@ -10,26 +9,42 @@ public class Appointment {
     private double price;
     private String comments;
     private String status;
-    //Constructor 
-public Appointment(String appointmentid ,String customerid,String technicianid ,String date,String servicetype,String time ,double price,String comments,String status){
-this.appointmentid= appointmentid;
-this.customerid=customerid;
-this.technicianid=technicianid;
-this.date=date;
-this.servicetype=servicetype;
-this.time=time;
-this.price=price;
-this.comments=comments;
-this .status= status ;
+
+    // Constructor
+    public Appointment(String appointmentid, String customerid, String technicianid, String counterstaffid, String date, String time, String servicetype, double price, String comments, String status) {
+        this.appointmentid = appointmentid;
+        this.customerid = customerid;
+        this.technicianid = technicianid;
+        this.counterstaffid = counterstaffid;
+        this.date = date;
+        this.time = time;
+        this.servicetype = servicetype;
+        this.price = price;
+        this.comments = comments;
+        this.status = status;
+    }
+
+    // Getters
+    public String getAppointmentid() { return appointmentid; }
+    public String getCustomerid() { return customerid; }
+    public String getTechnicianid() { return technicianid; }
+    public String getCounterstaffid() { return counterstaffid; }
+    public String getDate() { return date; }
+    public String getTime() { return time; }
+    public String getServicetype() { return servicetype; }
+    public double getPrice() { return price; }
+    public String getComments() { return comments; }
+    public String getStatus() { return status; }
+
+    // Setters
+    public void setAppointmentid(String appointmentid) { this.appointmentid = appointmentid; }
+    public void setCustomerid(String customerid) { this.customerid = customerid; }
+    public void setTechnicianid(String technicianid) { this.technicianid = technicianid; }
+    public void setCounterstaffid(String counterstaffid) { this.counterstaffid = counterstaffid; }
+    public void setDate(String date) { this.date = date; }
+    public void setTime(String time) { this.time = time; }
+    public void setServicetype(String servicetype) { this.servicetype = servicetype; }
+    public void setPrice(double price) { this.price = price; }
+    public void setComments(String comments) { this.comments = comments; }
+    public void setStatus(String status) { this.status = status; }
 }
-
-//getter
-public String getAppointmentid(){
-return appointmentid;}
-
-public String getCustomerid(){
-return customerid;}
-
-
-}
-
