@@ -105,14 +105,21 @@ public static void saveAppointment(Appointment appointment){
         System.out.println("Error: " + e.getMessage());
     }
 }
+<<<<<<< HEAD
 
 public static ArrayList<Appointment> getAllAppointments(){
     ArrayList<Appointment> appointments = new ArrayList<>();
     try {
+=======
+public static ArrayList<Appointment> getAllAppointments(){
+    ArrayList<Appointment> appointments = new ArrayList<>();
+    try{
+>>>>>>> f1aa9eb (file handler by hazik)
         BufferedReader br = new BufferedReader(new FileReader("appointment.txt"));
         String line;
         while((line = br.readLine()) != null){
             String[] parts = line.split(",");
+<<<<<<< HEAD
             Appointment appointment = null;
             
             appointment = new Appointment (parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], Double.parseDouble(parts[7]), parts[8], parts[9], parts[10]);
@@ -121,19 +128,45 @@ public static ArrayList<Appointment> getAllAppointments(){
         }
         br.close();
         }
+=======
+            Appointment appointment = new Appointment(
+                parts[0],                      // appointmentid
+                parts[1],                      // customerid
+                parts[2],                      // technicianid
+                parts[3],                      // counterstaffid
+                parts[4],                      // date
+                parts[5],                      // time
+                parts[6],                      // servicetype
+                Double.parseDouble(parts[7]),  // price
+                parts[8],                      // vehicleDetails
+                parts[9],                      // comments
+                parts[10]                      // status
+            );
+            appointments.add(appointment);
+        }
+        br.close();
+    }
+>>>>>>> f1aa9eb (file handler by hazik)
     catch (IOException e){
         System.out.println("Error :" + e.getMessage());
     }
     return appointments;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> f1aa9eb (file handler by hazik)
 public static void updateAppointment(Appointment updatedAppointment){
     ArrayList<Appointment> appointments = getAllAppointments();
     ArrayList<Appointment> updatedAppointments = new ArrayList<>();
     
     for(Appointment appointment : appointments){
         if(appointment.getAppointmentid().equals(updatedAppointment.getAppointmentid())){
+<<<<<<< HEAD
             updatedAppointments.add(updatedAppointment); // replace with new info
+=======
+            updatedAppointments.add(updatedAppointment); // replace
+>>>>>>> f1aa9eb (file handler by hazik)
         } else {
             updatedAppointments.add(appointment); // keep original
         }
@@ -150,6 +183,7 @@ public static void updateAppointment(Appointment updatedAppointment){
         System.out.println("Error: " + e.getMessage());
     }
 }
+<<<<<<< HEAD
 
 public static void savePayment(Payment payment){
     try{
@@ -214,5 +248,11 @@ public static Double[] getPrice(){
     return prices;
 }
 }
+=======
+}
+
+
+    
+>>>>>>> f1aa9eb (file handler by hazik)
     
 
