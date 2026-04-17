@@ -45,4 +45,18 @@ public class Payment {
     public void setPaymentDate(String paymentDate) { this.paymentDate = paymentDate; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public void setStatus(String status) { this.status = status; }
+    
+    @Override
+    
+    public String toString(){
+    return paymentId + "," +
+           appointmentId + "," +
+           customerId + "," +
+           amount + "," +
+           serviceType + "," +
+           duration + "," +
+           paymentDate + "," +
+           paymentMethod + "," +
+           status;
+    }
 }

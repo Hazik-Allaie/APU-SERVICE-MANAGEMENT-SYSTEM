@@ -104,10 +104,115 @@ public static void saveAppointment(Appointment appointment){
      catch(IOException e){
         System.out.println("Error: " + e.getMessage());
     }
-    
 }
 
-
+public static ArrayList<Appointment> getAllAppointments(){
+    ArrayList<Appointment> appointments = new ArrayList<>();
+    try {
+        BufferedReader br = new BufferedReader(new FileReader("appointment.txt"));
+        String line;
+        while((line = br.readLine()) != null){
+            String[] parts = line.split(",");
+            Appointment appointment = null;
+            
+            appointment = new Appointment (parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], Double.parseDouble(parts[7]), parts[8], parts[9], parts[10]);
+            
+            appointments.add(appointment);
+        }
+        br.close();
+        }
+    catch (IOException e){
+        System.out.println("Error :" + e.getMessage());
     }
+    return appointments;
+}
+
+public static void updateAppointment(Appointment updatedAppointment){
+    ArrayList<Appointment> appointments = getAllAppointments();
+    ArrayList<Appointment> updatedAppointments = new ArrayList<>();
+    
+    for(Appointment appointment : appointments){
+        if(appointment.getAppointmentid().equals(updatedAppointment.getAppointmentid())){
+            updatedAppointments.add(updatedAppointment); // replace with new info
+        } else {
+            updatedAppointments.add(appointment); // keep original
+        }
+    }
+    
+    try{
+        BufferedWriter bw = new BufferedWriter(new FileWriter("appointment.txt", false));
+        for(Appointment a : updatedAppointments){
+            bw.write(a.toString());
+            bw.newLine();
+        }
+        bw.close();
+    } catch(IOException e){
+        System.out.println("Error: " + e.getMessage());
+    }
+}
+
+public static void savePayment(Payment payment){
+    try{
+        BufferedWriter bw = new BufferedWriter(new FileWriter("payment.txt", true));
+        bw.write(payment.toString());
+        bw.newLine();
+        bw.close();
+        }  
+    
+     catch(IOException e){
+        System.out.println("Error: " + e.getMessage());
+    }
+}
+
+public static ArrayList<Payment> getAllPayments(){
+    ArrayList<Payment> payments = new ArrayList<>();
+    try {
+        BufferedReader br = new BufferedReader(new FileReader("payment.txt"));
+        String line;
+        while((line = br.readLine()) != null){
+            String[] parts = line.split(",");
+            Payment payment = null;
+            
+            payment = new Payment (parts[0], parts[1], parts[2], Double.parseDouble(parts[3]), parts[4], Integer.parseInt(parts[5]), parts[6], parts[7], parts[8]);
+            
+            payments.add(payment);
+        }
+        br.close();
+        }
+    catch (IOException e){
+        System.out.println("Error :" + e.getMessage());
+    }
+    return payments;
+}
+
+public static void savePrice(double normalPrice, double majorPrice){
+    try{
+        BufferedWriter bw = new BufferedWriter(new FileWriter("prices.txt", false));
+        bw.write(normalPrice + "," + majorPrice);
+        bw.close();
+        }  
+    
+     catch(IOException e){
+        System.out.println("Error: " + e.getMessage());
+    }
+}
+
+public static Double[] getPrice(){
+    Double[] prices = new Double[2];
+    try {
+        BufferedReader br = new BufferedReader(new FileReader("prices.txt"));
+        String line;
+        line = br.readLine();
+        String[] parts = line.split(",");
+        prices[0] = Double.parseDouble(parts[0]);
+        prices[1] = Double.parseDouble(parts[1]);
+        br.close();
+        }
+    catch (IOException e){
+        System.out.println("Error :" + e.getMessage());
+    }
+    return prices;
+}
+}
     
 

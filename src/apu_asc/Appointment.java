@@ -66,6 +66,7 @@ public String toString(){
            time + "," +
            servicetype + "," +
            price + "," +
+           vehicleDetails + "," +
            comments + "," +
            status;
 }
