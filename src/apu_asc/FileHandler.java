@@ -208,4 +208,15 @@ public class FileHandler {
         }
         return prices;
     }
+    
+    public static boolean checkusernameuniqueness(String newUserName, String currentUserId){
+        ArrayList<User> users = getallusers();
+        for(User user: users){
+            if(user.getUserid().equals(currentUserId))
+                continue;
+            if(user.getUsername().equals(newUserName))
+                return false;
+        }
+        return true;
+    }
 }
