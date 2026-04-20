@@ -26,7 +26,7 @@ public class ManagerDashboard {
         manageStaff();
     } 
     else if(choice.equals("2")){
-        setPrices();
+        setserviceprices();
     } 
     else if(choice.equals("3")){
         viewFeedbacks();
@@ -187,7 +187,84 @@ public class ManagerDashboard {
     FileHandler.updateUser(updatedUser);
     System.out.println("Staff updated successfully!");
 }
+    public void setserviceprices(){
+    Double[] prices =FileHandler.getPrice();
+    System.out.println("Current Normal Service Price: " + prices[0]);
+    System.out.println("Current Major Service Price: " + prices[1]);
     
+    System.out.print("Enter new Normal Service Price: ");
+    double normalPrice = Double.parseDouble(sc.nextLine());
+    System.out.print("Enter new Major Service Price: ");
+    double majorPrice = Double.parseDouble(sc.nextLine());
+    
+    FileHandler.savePrice(normalPrice, majorPrice);
+    
+    System.out.println("Price saved Successfully !");
+    }
+    
+    public void viewFeedbacks(){
+    ArrayList<Appointment> appointments = FileHandler.getAllAppointments(); 
+    boolean found = false ;
+    for(Appointment appointment :appointments){
+        found = true;
+        System.out.println("--------------------");
+        System.out.println("Appointment ID: " + appointment.getAppointmentid());
+        System.out.println("Customer ID: " + appointment.getCustomerid());
+        System.out.println("Comments: " + appointment.getComments());
+        System.out.println("Status: " + appointment.getStatus());
+        }
+    if(!found){
+    System.out.println("No feedbacks found!");}
+    
+    
+    }
+    public void viewReports(){
+    ArrayList<Appointment> appointments = FileHandler.getAllAppointments();
+    ArrayList<User> users = FileHandler.getallusers();
+    
+    int totalAppointments = 0;
+    int completedAppointments = 0;
+    double totalRevenue = 0;
+    int totalManagers = 0;
+    int totalCounterStaff = 0;
+    int totalTechnicians = 0;
+    int totalCustomers = 0;
+    
+    // count appointments
+    for(Appointment appointment : appointments){
+        totalAppointments++;
+        if(appointment.getStatus().equals("Completed")){
+            completedAppointments++;
+            totalRevenue += appointment.getPrice();
+        }
+    }
+    
+    // count users by role
+    for(User user : users){
+        if(user.getRole().equals("Manager")){
+            totalManagers++;
+        } else if(user.getRole().equals("CounterStaff")){
+            totalCounterStaff++;
+        } else if(user.getRole().equals("Technician")){
+            totalTechnicians++;
+        } else if(user.getRole().equals("Customer")){
+            totalCustomers++;
+        }
+    }
+    
+    // print report
+    System.out.println("========== REPORT ==========");
+    System.out.println("Total Appointments: " + totalAppointments);
+    System.out.println("Completed Appointments: " + completedAppointments);
+    System.out.println("Pending Appointments: " + (totalAppointments - completedAppointments));
+    System.out.println("Total Revenue: RM " + totalRevenue);
+    System.out.println("----------------------------");
+    System.out.println("Total Managers: " + totalManagers);
+    System.out.println("Total Counter Staff: " + totalCounterStaff);
+    System.out.println("Total Technicians: " + totalTechnicians);
+    System.out.println("Total Customers: " + totalCustomers);
+    System.out.println("============================");
+}
 }
 
 
