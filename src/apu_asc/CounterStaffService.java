@@ -1,4 +1,8 @@
 package apu_asc;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 
 
 public class CounterStaffService {
@@ -129,4 +133,232 @@ public class CounterStaffService {
         FileHandler.deleteuser(userId);
         return new OperationResult(true, "Customer deleted successfully");
     }
+    
+    private boolean isOverlapping(String technicianId, ArrayList<Appointment> existingAppointments, String date, String time, String serviceType){
+        ArrayList<Integer> existingStrTime = new ArrayList<>();
+        ArrayList<Integer> existingEndTime = new ArrayList<>();
+        
+        for(Appointment appointment: existingAppointments){
+            if(appointment.getTechnicianid().equals(technicianId)){
+                if(appointment.getDate().equals(date)){
+                    String existingTime = appointment.getTime();
+                    String[] parts = existingTime.split(":");
+                    int hours = Integer.parseInt(parts[0]);
+                    int minutes = Integer.parseInt(parts[1]);
+                    int totalMinutes = (hours * 60) + minutes;
+                    existingStrTime.add(totalMinutes);
+                    String existingServiceType = appointment.getServicetype();
+                    if(existingServiceType.equalsIgnoreCase("Normal"))
+                        existingEndTime.add(totalMinutes + 60);
+                    else
+                        existingEndTime.add(totalMinutes + 180);
+                }
+            }
+        }
+        
+        String[] part = time.split(":");
+        int newHours = Integer.parseInt(part[0]);
+        int newMinutes = Integer.parseInt(part[1]);
+        int newStrTime = (newHours * 60) + newMinutes;
+        int newEndTime;
+        if( serviceType.equalsIgnoreCase("Normal"))
+            newEndTime = newStrTime + 60;
+        else
+            newEndTime = newStrTime + 180;
+        
+        for(int i = 0; i< existingStrTime.size(); i++){
+            if(newStrTime < existingEndTime.get(i) && newEndTime > existingStrTime.get(i))
+                return true;
+        }
+        return false;
+    }
+    
+    public ArrayList<Technician> getAvailableTechnicians(String date, String time, String serviceType){
+        ArrayList<Technician> availableTechnicians = new ArrayList<>();
+        ArrayList<User> allUsers = FileHandler.getallusers();
+        ArrayList<Appointment> allAppointments = FileHandler.getAllAppointments();
+        
+        for(User user: allUsers){
+            if(user instanceof Technician){
+                if(!isOverlapping(user.getUserid(), allAppointments, date, time, serviceType))
+                    availableTechnicians.add((Technician)user);
+            }
+        }
+        
+        return availableTechnicians;
+    }
+    
+    private static String generateNextAppointmentId(){
+        ArrayList<Appointment> appointments = FileHandler.getAllAppointments();
+        int max = 0;
+        
+        for (Appointment appointment : appointments){
+            String id = appointment.getAppointmentid();
+                
+            if(id != null && id.startsWith("AP")){
+                String numberPart = id.substring(2);
+                    
+                try{
+                    int num = Integer.parseInt(numberPart);
+                    if(num>max){
+                        max=num;
+                    }
+                }
+                catch(NumberFormatException e){
+                }
+            }
+        }
+        
+        int next = max +1;
+        
+        return String.format("AP%03d", next);
+    }
+    
+    public OperationResult createAppointment(String customerId, String technicianId, String date, String time, String serviceType, String vehicleDetails, String comments, CounterStaff loggedInUser){
+        String appointmentId = generateNextAppointmentId();
+        
+        Double[] prices = FileHandler.getPrice();
+        double price;
+        if(serviceType.equalsIgnoreCase("Normal"))
+            price = prices[0];
+        else
+            price = prices[1];
+        
+        Appointment newAppointment = new Appointment(appointmentId, customerId, technicianId, loggedInUser.getUserid(), date, time, serviceType, price, vehicleDetails, comments, "Pending");
+        
+        FileHandler.saveAppointment(newAppointment);
+        return new OperationResult(true, "New Appointment added Successfully");
+    }
+    
+    private static String generateNextPaymentId(){
+        ArrayList<Payment> payments = FileHandler.getAllPayments();
+        int max = 0;
+        
+        for (Payment payment : payments){
+            String id = payment.getPaymentId();
+                
+            if(id != null && id.startsWith("PAY")){
+                String numberPart = id.substring(3);
+                    
+                try{
+                    int num = Integer.parseInt(numberPart);
+                    if(num>max){
+                        max=num;
+                    }
+                }
+                catch(NumberFormatException e){
+                }
+            }
+        }
+        
+        int next = max +1;
+        
+        return String.format("PAY%03d", next);
+    }
+    
+    private Appointment searchAppointmentById(String appointmentId){
+        ArrayList<Appointment> appointments = FileHandler.getAllAppointments();
+        
+        for(Appointment appointment: appointments){
+            if(appointment.getAppointmentid().equals(appointmentId))
+                return appointment;
+        }
+        return null;
+    }
+    
+    public OperationResult collectPayment(String appointmentId, String paymentMethod){
+        Appointment currentAppointment = searchAppointmentById(appointmentId);
+        if(currentAppointment == null)
+            return new OperationResult(false, "Payment failed, Appointment doesn't exist");
+        if(!currentAppointment.getStatus().equals("Completed"))
+            return new OperationResult(false, "Payment failed, Appointment is not Completed Yet!");
+            
+        String paymentId = generateNextPaymentId();
+        String paymentDate = java.time.LocalDate.now().toString();
+        String customerId = currentAppointment.getCustomerid();
+        String serviceType = currentAppointment.getServicetype();
+        double price = currentAppointment.getPrice();
+        int duration;
+            
+        if(serviceType.equalsIgnoreCase("Normal"))
+            duration = 60;
+        else
+            duration = 180;
+            
+        Payment payment = new Payment(paymentId, appointmentId, customerId, price, serviceType, duration, paymentDate, paymentMethod, "Paid");
+        FileHandler.savePayment(payment);
+        return new OperationResult(true, "Payment Successful");
+            
+    }
+    
+    private Payment searchPaymentById(String paymentId){
+        ArrayList<Payment> payments = FileHandler.getAllPayments();
+        
+        for(Payment payment: payments){
+            if(payment.getPaymentId().equals(paymentId))
+                return payment;
+        }
+        return null;
+    }
+    
+    private Technician searchTechnicianById(String userid){
+        ArrayList<User> users = FileHandler.getallusers();
+        
+        for(User user: users){
+            if(user instanceof Technician){
+                if(user.getUserid().equals(userid))
+                    return (Technician) user;
+            }
+        }
+        return null;
+    }
+    
+    public String generateReceipt(String paymentId){
+        Payment paymentRecord = searchPaymentById(paymentId);
+        if(paymentRecord == null)
+            return "Error: Payment not found";
+        
+        Appointment appointment = searchAppointmentById(paymentRecord.getAppointmentId());
+        String technicianId = appointment.getTechnicianid();
+        Technician technician = searchTechnicianById(technicianId);
+        Customer customer = searchCustomerById(appointment.getCustomerid());
+        
+        StringBuilder receipt = new StringBuilder();
+        receipt.append("=====Receipt=====\n");
+        receipt.append("Payment ID: ");
+        receipt.append(paymentId);
+        receipt.append("\nCustomer Name: ");
+        receipt.append(customer.getName());
+        receipt.append("\tCustomer ID: ");
+        receipt.append(paymentRecord.getCustomerId());
+        receipt.append("\nService Type: ");
+        receipt.append(paymentRecord.getServiceType());
+        receipt.append("\nAmount: ");
+        receipt.append(paymentRecord.getAmount());
+        receipt.append("\nAppointment Date: ");
+        receipt.append(appointment.getDate());
+        receipt.append("\nPayment Date: ");
+        receipt.append(paymentRecord.getPaymentDate());
+        receipt.append("\nPayment Method: ");
+        receipt.append(paymentRecord.getPaymentMethod());
+        receipt.append("\nTechnician Name: ");
+        receipt.append(technician.getName());
+        receipt.append("\tTechnician ID: ");
+        receipt.append(technicianId);
+        receipt.append("\nVehicle Details: ");
+        receipt.append(appointment.getVehicleDetails());
+        
+        try{
+            BufferedWriter bw = new BufferedWriter(new FileWriter("receipt.txt", true));
+            bw.write(receipt.toString());
+            bw.newLine();
+            bw.close();
+        } catch(IOException e){
+            System.out.println("Error: " + e.getMessage());
+        }
+        
+        return receipt.toString();
+    }
 }
+
+    
