@@ -34,7 +34,7 @@ public class CounterStaffService {
         return String.format("CU%03d", next);
     }
     
-    public OperationResult updateProfile(CounterStaff loggedInUser, String newName, String newEmail, String newUsername, String currentPassword, String newPassword, String newContact){
+    public OperationResult updateProfile(CounterStaff loggedInUser, String newName, int newAge, String newEmail, String newUsername, String currentPassword, String newPassword, String newContact){
         if(!(loggedInUser.getPassword().equals(currentPassword)))
             return new OperationResult(false, "Current password is incorrect");
         
@@ -42,6 +42,7 @@ public class CounterStaffService {
             return new OperationResult(false, "Username not available");
         
         loggedInUser.setName(newName);
+        loggedInUser.setAge(newAge);
         loggedInUser.setEmail(newEmail);
         loggedInUser.setUsername(newUsername);
         loggedInUser.setPassword(newPassword);
