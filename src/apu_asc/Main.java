@@ -13,8 +13,18 @@ public class Main {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         // TODO code application logic here
-    }
+    }*/
     
+    public static void main(String[] args) {
+    javax.swing.SwingUtilities.invokeLater(() -> {
+        CounterStaff testUser = new CounterStaff(
+            "CS001", "John Smith", 30,
+            "john@apu.edu.my", "john", "password123", "0123456789"
+        );
+        new CounterStaffFrame(testUser);
+    });
 }
+}
+
