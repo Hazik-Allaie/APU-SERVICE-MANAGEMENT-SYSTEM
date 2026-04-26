@@ -1,315 +1,220 @@
 package apu_asc;
 
 import java.awt.*;
+import java.awt.event.*;
 import javax.swing.*;
 
 /**
- * CounterStaffFrame — the root window for the Counter Staff role.
+ * CounterStaffFrame — main dashboard window.
  *
- * Architecture:
- *  - Dark sidebar (persistent navigation)
- *  - Right-side CardLayout content area (swaps panels on nav click)
- *
- * Every panel receives a reference to this frame so it can call
- * navigateTo(String) to switch screens.
+ * Shows a header with the staff's name and a grid of feature cards.
+ * Each card opens its own modal dialog.
  */
 public class CounterStaffFrame extends JFrame {
 
-    private final CardLayout    cardLayout   = new CardLayout();
-    private final JPanel        contentArea  = new JPanel(cardLayout);
-    private final CounterStaff  loggedInUser;
+    private final CounterStaff user;
 
-    // Panel keys — defined in UITheme, aliased here for readability
-    public static final String CARD_DASHBOARD    = UITheme.CARD_DASHBOARD;
-    public static final String CARD_CUSTOMERS    = UITheme.CARD_CUSTOMERS;
-    public static final String CARD_APPOINTMENTS = UITheme.CARD_APPOINTMENTS;
-    public static final String CARD_PAYMENT      = UITheme.CARD_PAYMENT;
-    public static final String CARD_RECEIPT      = UITheme.CARD_RECEIPT;
-    public static final String CARD_PROFILE      = UITheme.CARD_PROFILE;
-
-    // Sidebar nav buttons — kept as fields so we can toggle active state
-    private final SidebarButton[] navButtons = new SidebarButton[5];
-
-    public CounterStaffFrame(CounterStaff loggedInUser) {
-        this.loggedInUser = loggedInUser;
-
-        setTitle("APU-ASC  |  Counter Staff");
-        setSize(UITheme.FRAME_WIDTH, UITheme.FRAME_HEIGHT);
+    public CounterStaffFrame(CounterStaff user) {
+        this.user = user;
+        setTitle("Counter Staff Dashboard - APU-ASC");
+        setSize(900, 620);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setMinimumSize(new Dimension(900, 600));
+        setResizable(false);
 
         JPanel root = new JPanel(new BorderLayout());
-        root.add(buildSidebar(), BorderLayout.WEST);
-        root.add(buildContentArea(), BorderLayout.CENTER);
-        add(root);
-
+        root.setBackground(UITheme.BG);
+        root.add(buildHeader(),    BorderLayout.NORTH);
+        root.add(buildCardGrid(),  BorderLayout.CENTER);
+        root.add(buildFooter(),    BorderLayout.SOUTH);
+        setContentPane(root);
         setVisible(true);
     }
 
-    // ── Sidebar ───────────────────────────────────────────────────────────────
+    // ── Header ─────────────────────────────────────────────────────────────────
 
-    private JPanel buildSidebar() {
-        JPanel sidebar = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(UITheme.SIDEBAR_BG);
-                g2.fillRect(0, 0, getWidth(), getHeight());
-                // Right edge shadow
-                GradientPaint shadow = new GradientPaint(
-                    getWidth() - 8, 0, new Color(0, 0, 0, 40),
-                    getWidth(),     0, new Color(0, 0, 0, 0)
-                );
-                g2.setPaint(shadow);
-                g2.fillRect(getWidth() - 8, 0, 8, getHeight());
-                g2.dispose();
+    private JPanel buildHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(UITheme.WHITE);
+        header.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, UITheme.BORDER),
+            BorderFactory.createEmptyBorder(18, 28, 16, 28)
+        ));
+
+        // Left: title + welcome
+        JPanel left = new JPanel();
+        left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+
+        JPanel titleRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        titleRow.setOpaque(false);
+        JPanel accentBar = new JPanel();
+        accentBar.setBackground(UITheme.ACCENT);
+        accentBar.setPreferredSize(new Dimension(4, 28));
+        titleRow.add(accentBar);
+        titleRow.add(Box.createRigidArea(new Dimension(12, 0)));
+        JLabel title = UITheme.createLabel("Counter Staff Dashboard", UITheme.FONT_HEADING, UITheme.TEXT_PRIMARY);
+        titleRow.add(title);
+
+        JLabel welcome = UITheme.createLabel("  Welcome back, " + user.getName(),
+                UITheme.FONT_REGULAR, UITheme.TEXT_SECONDARY);
+        welcome.setBorder(BorderFactory.createEmptyBorder(4, 16, 0, 0));
+
+        left.add(titleRow);
+        left.add(welcome);
+
+        // Right: sign out button
+        JButton signOut = UITheme.createOutlineButton("⏻  Sign Out");
+        signOut.setPreferredSize(new Dimension(130, UITheme.BUTTON_H));
+        signOut.addActionListener(e -> {
+            int c = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to sign out?", "Sign Out",
+                JOptionPane.YES_NO_OPTION);
+            if (c == JOptionPane.YES_OPTION) {
+                dispose();
+                System.exit(0); // teammate will replace with new LoginFrame()
+            }
+        });
+
+        header.add(left,     BorderLayout.WEST);
+        header.add(signOut,  BorderLayout.EAST);
+        return header;
+    }
+
+    // ── Card grid ──────────────────────────────────────────────────────────────
+
+    private JPanel buildCardGrid() {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.setBorder(BorderFactory.createEmptyBorder(28, 28, 10, 28));
+
+        JLabel sectionLabel = UITheme.createLabel("Quick Actions", UITheme.FONT_BOLD, UITheme.TEXT_SECONDARY);
+        sectionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
+
+        JPanel grid = new JPanel(new GridLayout(2, 3, 16, 16));
+        grid.setOpaque(false);
+
+        grid.add(makeCard("👥", "Manage Customers",
+            "Add, search, update and\ndelete customer records.",
+            e -> new ManageCustomersDialog(this)));
+
+        grid.add(makeCard("📅", "Manage Appointments",
+            "Create new service\nappointments for customers.",
+            e -> new ManageAppointmentsDialog(this, user)));
+
+        grid.add(makeCard("💳", "Collect Payment",
+            "Process payment for a\ncompleted appointment.",
+            e -> new CollectPaymentDialog(this)));
+
+        grid.add(makeCard("🧾", "Generate Receipt",
+            "Display and save a receipt\nfor any payment.",
+            e -> new GenerateReceiptDialog(this)));
+
+        grid.add(makeCard("✏", "Edit My Profile",
+            "Update your personal\ninformation and password.",
+            e -> new EditProfileDialog(this, user)));
+
+        // Empty filler for 6th cell
+        JPanel filler = new JPanel(); filler.setOpaque(false);
+        grid.add(filler);
+
+        wrapper.add(sectionLabel, BorderLayout.NORTH);
+        wrapper.add(grid,         BorderLayout.CENTER);
+        return wrapper;
+    }
+
+    private JPanel makeCard(String icon, String title, String desc, ActionListener action) {
+        JPanel card = new JPanel(new BorderLayout()) {
+            private boolean hovered = false;
+            {
+                setBackground(UITheme.WHITE);
+                setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(UITheme.BORDER),
+                    BorderFactory.createEmptyBorder(20, 20, 20, 20)
+                ));
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                addMouseListener(new MouseAdapter() {
+                    @Override public void mouseEntered(MouseEvent e) {
+                        hovered = true;
+                        setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(UITheme.ACCENT, 2),
+                            BorderFactory.createEmptyBorder(19, 19, 19, 19)));
+                        repaint();
+                    }
+                    @Override public void mouseExited(MouseEvent e) {
+                        hovered = false;
+                        setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(UITheme.BORDER),
+                            BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+                        repaint();
+                    }
+                    @Override public void mouseClicked(MouseEvent e) { action.actionPerformed(null); }
+                });
             }
         };
-        sidebar.setPreferredSize(new Dimension(UITheme.SIDEBAR_WIDTH, 0));
-        sidebar.setLayout(new BorderLayout());
-        sidebar.setOpaque(false);
 
-        // ── Logo area ──────────────────────────────────────────────────────────
-        JPanel logoPanel = new JPanel();
-        logoPanel.setOpaque(false);
-        logoPanel.setLayout(new BoxLayout(logoPanel, BoxLayout.Y_AXIS));
-        logoPanel.setBorder(BorderFactory.createEmptyBorder(28, 22, 24, 22));
+        // Icon in circle
+        JPanel iconCircle = new JPanel(new GridBagLayout());
+        iconCircle.setOpaque(false);
+        iconCircle.setPreferredSize(new Dimension(44, 44));
+        iconCircle.setMaximumSize(new Dimension(44, 44));
+        iconCircle.setBackground(UITheme.ACCENT_LIGHT);
+        iconCircle.setBorder(null);
 
-        JLabel logoIcon = new JLabel("🔧");
-        logoIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 26));
-        logoIcon.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel logoText = UITheme.createLabel("APU-ASC", UITheme.FONT_LOGO, Color.WHITE);
-        logoText.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel roleTag = UITheme.createLabel("Counter Staff", UITheme.FONT_SMALL,
-                new Color(100, 116, 139));
-        roleTag.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        logoPanel.add(logoIcon);
-        logoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        logoPanel.add(logoText);
-        logoPanel.add(Box.createRigidArea(new Dimension(0, 3)));
-        logoPanel.add(roleTag);
-
-        // ── Nav items ─────────────────────────────────────────────────────────
-        JPanel nav = new JPanel();
-        nav.setOpaque(false);
-        nav.setLayout(new BoxLayout(nav, BoxLayout.Y_AXIS));
-        nav.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
-
-        String[][] items = {
-            { "⊞",  "Dashboard",    CARD_DASHBOARD    },
-            { "👤", "Customers",    CARD_CUSTOMERS    },
-            { "📅", "Appointments", CARD_APPOINTMENTS },
-            { "💳", "Payment",      CARD_PAYMENT      },
-            { "🧾", "Receipt",      CARD_RECEIPT      },
-        };
-
-        for (int i = 0; i < items.length; i++) {
-            final String card = items[i][2];
-            final int idx = i;
-            SidebarButton btn = new SidebarButton(items[i][0], items[i][1]);
-            btn.addActionListener(e -> {
-                navigateTo(card);
-                setActiveNav(idx);
-            });
-            navButtons[i] = btn;
-            nav.add(btn);
-            nav.add(Box.createRigidArea(new Dimension(0, 4)));
-        }
-
-        // ── Bottom: user card + logout ─────────────────────────────────────────
-        JPanel bottom = new JPanel();
-        bottom.setOpaque(false);
-        bottom.setLayout(new BoxLayout(bottom, BoxLayout.Y_AXIS));
-        bottom.setBorder(BorderFactory.createEmptyBorder(0, 12, 20, 12));
-
-        // Divider line
-        JPanel divider = new JPanel();
-        divider.setOpaque(true);
-        divider.setBackground(UITheme.SIDEBAR_DIVIDER);
-        divider.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        divider.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        // User info chip
-        JPanel userChip = new JPanel();
-        userChip.setOpaque(false);
-        userChip.setLayout(new BoxLayout(userChip, BoxLayout.X_AXIS));
-        userChip.setBorder(BorderFactory.createEmptyBorder(14, 10, 10, 10));
-        userChip.setAlignmentX(Component.LEFT_ALIGNMENT);
-        userChip.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
-
-        // Avatar circle (painted)
-        JPanel avatar = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
+        // Paint circle background
+        JPanel iconWrap = new JPanel(new GridBagLayout()) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(UITheme.ACCENT);
-                g2.fillOval(0, 0, 34, 34);
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                String initial = loggedInUser.getName().substring(0, 1).toUpperCase();
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(initial, (34 - fm.stringWidth(initial)) / 2,
-                        (34 + fm.getAscent() - fm.getDescent()) / 2);
-                g2.dispose();
+                g2.setColor(UITheme.ACCENT_LIGHT);
+                g2.fillOval(0, 0, getWidth(), getHeight());
+                g2.dispose(); super.paintComponent(g);
             }
         };
-        avatar.setOpaque(false);
-        avatar.setPreferredSize(new Dimension(34, 34));
-        avatar.setMaximumSize(new Dimension(34, 34));
-        avatar.setMinimumSize(new Dimension(34, 34));
+        iconWrap.setOpaque(false);
+        iconWrap.setPreferredSize(new Dimension(44, 44));
+        JLabel iconLbl = new JLabel(icon);
+        iconLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        iconWrap.add(iconLbl);
 
-        JPanel userInfo = new JPanel();
-        userInfo.setOpaque(false);
-        userInfo.setLayout(new BoxLayout(userInfo, BoxLayout.Y_AXIS));
-        userInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        // Text content
+        JPanel text = new JPanel();
+        text.setOpaque(false);
+        text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
+        text.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 0));
 
-        String displayName = loggedInUser.getName().length() > 14
-                ? loggedInUser.getName().substring(0, 13) + "…"
-                : loggedInUser.getName();
-        JLabel nameLabel = UITheme.createLabel(displayName, UITheme.FONT_BOLD, Color.WHITE);
-        JLabel idLabel   = UITheme.createLabel(loggedInUser.getUserid(), UITheme.FONT_SMALL,
-                new Color(100, 116, 139));
-        nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        idLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        userInfo.add(nameLabel);
-        userInfo.add(Box.createRigidArea(new Dimension(0, 2)));
-        userInfo.add(idLabel);
+        JLabel titleLbl = UITheme.createLabel(title, UITheme.FONT_CARD_TITLE, UITheme.TEXT_PRIMARY);
+        titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        userChip.add(avatar);
-        userChip.add(userInfo);
+        // Multiline desc
+        String[] lines = desc.split("\n");
+        JLabel descLbl = UITheme.createLabel(
+            "<html>" + lines[0] + "<br>" + (lines.length > 1 ? lines[1] : "") + "</html>",
+            UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
+        descLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Edit profile shortcut
-        SidebarButton profileBtn = new SidebarButton("✏", "Edit Profile");
-        profileBtn.addActionListener(e -> {
-            navigateTo(CARD_PROFILE);
-            setActiveNav(-1);
-        });
+        text.add(titleLbl);
+        text.add(Box.createRigidArea(new Dimension(0, 4)));
+        text.add(descLbl);
 
-        // Logout
-        SidebarButton logoutBtn = new SidebarButton("⏻", "Logout");
-        logoutBtn.setForeground(new Color(248, 113, 113));
-        logoutBtn.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                CounterStaffFrame.this,
-                "Are you sure you want to log out?",
-                "Logout",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-            );
-            if (confirm == JOptionPane.YES_OPTION) {
-                dispose();
-                System.exit(0);
-            }
-        });
-
-        bottom.add(divider);
-        bottom.add(userChip);
-        bottom.add(Box.createRigidArea(new Dimension(0, 4)));
-        bottom.add(profileBtn);
-        bottom.add(Box.createRigidArea(new Dimension(0, 4)));
-        bottom.add(logoutBtn);
-
-        // Assemble sidebar
-        JPanel topSection = new JPanel();
-        topSection.setOpaque(false);
-        topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
-
-        // Thin accent line under logo
-        JPanel accentLine = new JPanel();
-        accentLine.setOpaque(true);
-        accentLine.setBackground(UITheme.SIDEBAR_DIVIDER);
-        accentLine.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        accentLine.setPreferredSize(new Dimension(1, 1));
-
-        topSection.add(logoPanel);
-        topSection.add(accentLine);
-        topSection.add(Box.createRigidArea(new Dimension(0, 16)));
-        topSection.add(nav);
-
-        sidebar.add(topSection, BorderLayout.NORTH);
-        sidebar.add(bottom,     BorderLayout.SOUTH);
-
-        // Default active
-        setActiveNav(0);
-        return sidebar;
+        card.add(iconWrap, BorderLayout.NORTH);
+        card.add(text,     BorderLayout.CENTER);
+        return card;
     }
 
-    // ── Content area (CardLayout) ─────────────────────────────────────────────
+    // ── Footer ─────────────────────────────────────────────────────────────────
 
-    private JPanel buildContentArea() {
-        contentArea.setBackground(UITheme.CONTENT_BG);
-
-        contentArea.add(new DashboardPanel(this, loggedInUser),    CARD_DASHBOARD);
-        contentArea.add(new ManageCustomersPanel(this, loggedInUser),    CARD_CUSTOMERS);
-        contentArea.add(new ManageAppointmentsPanel(this, loggedInUser), CARD_APPOINTMENTS);
-        contentArea.add(new CollectPaymentPanel(this, loggedInUser),     CARD_PAYMENT);
-        contentArea.add(new GenerateReceiptPanel(this, loggedInUser),    CARD_RECEIPT);
-        contentArea.add(new EditProfilePanel(this, loggedInUser),        CARD_PROFILE);
-
-        cardLayout.show(contentArea, CARD_DASHBOARD);
-        return contentArea;
-    }
-
-    // ── Navigation API ────────────────────────────────────────────────────────
-
-    public void navigateTo(String cardName) {
-        cardLayout.show(contentArea, cardName);
-    }
-
-    private void setActiveNav(int activeIdx) {
-        for (int i = 0; i < navButtons.length; i++) {
-            navButtons[i].setActive(i == activeIdx);
-        }
-    }
-
-    // ── SidebarButton inner class ─────────────────────────────────────────────
-
-    static class SidebarButton extends JButton {
-        private boolean active = false;
-
-        SidebarButton(String icon, String label) {
-            setText("  " + icon + "   " + label);
-            setFont(UITheme.FONT_SIDEBAR);
-            setForeground(UITheme.SIDEBAR_TEXT);
-            setHorizontalAlignment(SwingConstants.LEFT);
-            setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-            setMinimumSize(new Dimension(0, 40));
-            setPreferredSize(new Dimension(0, 40));
-            setBorderPainted(false);
-            setFocusPainted(false);
-            setContentAreaFilled(false);
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setOpaque(false);
-        }
-
-        public void setActive(boolean active) {
-            this.active = active;
-            setFont(active ? UITheme.FONT_SIDEBAR_BOLD : UITheme.FONT_SIDEBAR);
-            setForeground(active ? Color.WHITE : UITheme.SIDEBAR_TEXT);
-            repaint();
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            if (active) {
-                g2.setColor(UITheme.SIDEBAR_ACTIVE_BG);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
-                // Left accent bar
-                g2.setColor(UITheme.ACCENT);
-                g2.fillRoundRect(0, 6, 3, getHeight() - 12, 3, 3);
-            } else if (getModel().isRollover()) {
-                g2.setColor(UITheme.SIDEBAR_HOVER);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
-            }
-            g2.dispose();
-            super.paintComponent(g);
-        }
+    private JPanel buildFooter() {
+        JPanel f = new JPanel(new BorderLayout());
+        f.setBackground(UITheme.WHITE);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, UITheme.BORDER),
+            BorderFactory.createEmptyBorder(10, 28, 10, 28)
+        ));
+        f.add(UITheme.createLabel("APU Automotive Service Centre  •  Counter Staff Module",
+            UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY), BorderLayout.WEST);
+        f.add(UITheme.createLabel("ID: " + user.getUserid(),
+            UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY), BorderLayout.EAST);
+        return f;
     }
 }
