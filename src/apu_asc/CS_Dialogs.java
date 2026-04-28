@@ -6,10 +6,10 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  CollectPaymentDialog
+//  CS_CollectPaymentDialog
 // ══════════════════════════════════════════════════════════════════════════════
 
-class CollectPaymentDialog {
+class CS_CollectPaymentDialog {
 
     private final JFrame              parent;
     private final CounterStaffService service = new CounterStaffService();
@@ -21,13 +21,13 @@ class CollectPaymentDialog {
     private JLabel            statusLabel;
     private JButton           confirmBtn;
 
-    public CollectPaymentDialog(JFrame parent) {
+    public CS_CollectPaymentDialog(JFrame parent) {
         this.parent = parent;
-        JDialog dialog = UITheme.createDialog(parent, "Collect Payment", 680, 520);
+        JDialog dialog = UITheme.createDialog(parent, "Collect Payment", 680, 500);
         dialog.setLayout(new BorderLayout());
-        dialog.add(UITheme.dialogHeader("Collect Payment"),  BorderLayout.NORTH);
-        dialog.add(buildBody(),                              BorderLayout.CENTER);
-        dialog.add(buildButtons(dialog),                     BorderLayout.SOUTH);
+        dialog.add(UITheme.dialogHeader("Collect Payment"), BorderLayout.NORTH);
+        dialog.add(buildBody(),            BorderLayout.CENTER);
+        dialog.add(buildButtons(dialog),   BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
 
@@ -37,30 +37,26 @@ class CollectPaymentDialog {
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(BorderFactory.createEmptyBorder(20, 28, 16, 28));
 
-        // ── Input row ─────────────────────────────────────────────────────────
-        JPanel inputRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 0));
+        // Input row
+        JPanel inputRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 0));
         inputRow.setOpaque(false); inputRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         fApptId = UITheme.createTextField();
         fApptId.setPreferredSize(new Dimension(200, UITheme.INPUT_H));
         fMethod = UITheme.createComboBox(new String[]{"Cash", "Card", "Online"});
-        fMethod.setPreferredSize(new Dimension(160, UITheme.INPUT_H));
-
+        fMethod.setPreferredSize(new Dimension(150, UITheme.INPUT_H));
         JButton loadBtn = UITheme.createOutlineButton("Load Details");
         loadBtn.addActionListener(e -> handleLoad());
-
         inputRow.add(UITheme.createLabel("Appointment ID:", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY));
         inputRow.add(fApptId);
         inputRow.add(UITheme.createLabel("Payment Method:", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY));
         inputRow.add(fMethod);
         inputRow.add(loadBtn);
 
-        // ── Summary card ──────────────────────────────────────────────────────
+        // Summary card
         summaryPanel = buildSummaryCard();
         summaryPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         summaryPanel.setVisible(false);
 
-        // ── Status ────────────────────────────────────────────────────────────
         statusLabel = UITheme.createLabel(" ", UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
         statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         statusLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -73,12 +69,12 @@ class CollectPaymentDialog {
     }
 
     private JPanel buildSummaryCard() {
-        JPanel card = new JPanel(new GridLayout(3, 4, 16, 12));
+        JPanel card = new JPanel(new GridLayout(2, 3, 16, 12));
         card.setBackground(new Color(248, 249, 252));
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(UITheme.BORDER),
             BorderFactory.createEmptyBorder(16, 20, 16, 20)));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         lblApptId   = val(); lblCustomer = val(); lblService = val();
         lblAmount   = val(); lblAmount.setForeground(UITheme.ACCENT);
@@ -98,11 +94,13 @@ class CollectPaymentDialog {
         JPanel p = new JPanel(); p.setOpaque(false);
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.add(UITheme.createLabel(label, UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY));
-        p.add(Box.createRigidArea(new Dimension(0,4)));
+        p.add(Box.createRigidArea(new Dimension(0, 4)));
         p.add(value); return p;
     }
 
-    private JLabel val() { return UITheme.createLabel("—", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY); }
+    private JLabel val() {
+        return UITheme.createLabel("—", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY);
+    }
 
     private JPanel buildButtons(JDialog dialog) {
         confirmBtn = UITheme.createPrimaryButton("Confirm Payment");
@@ -138,13 +136,18 @@ class CollectPaymentDialog {
         summaryPanel.setVisible(true);
         summaryPanel.revalidate(); summaryPanel.repaint();
 
-        if (done) { setStatus("Appointment completed. Ready to collect payment.", true); confirmBtn.setEnabled(true); }
-        else      { setStatus("Payment cannot be collected — appointment not yet Completed.", false); confirmBtn.setEnabled(false); }
+        if (done) {
+            setStatus("Appointment completed. Ready to collect payment.", true);
+            confirmBtn.setEnabled(true);
+        } else {
+            setStatus("Payment cannot be collected — appointment not yet Completed.", false);
+            confirmBtn.setEnabled(false);
+        }
     }
 
     private void handleConfirm(JDialog dialog) {
-        OperationResult r = service.collectPayment(fApptId.getText().trim(),
-            (String) fMethod.getSelectedItem());
+        OperationResult r = service.collectPayment(
+            fApptId.getText().trim(), (String) fMethod.getSelectedItem());
         if (r.getResult()) {
             JOptionPane.showMessageDialog(parent,
                 r.getMessage() + "\nYou can now generate a receipt from the Receipt screen.",
@@ -160,10 +163,10 @@ class CollectPaymentDialog {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  GenerateReceiptDialog
+//  CS_GenerateReceiptDialog
 // ══════════════════════════════════════════════════════════════════════════════
 
-class GenerateReceiptDialog {
+class CS_GenerateReceiptDialog {
 
     private final JFrame              parent;
     private final CounterStaffService service = new CounterStaffService();
@@ -173,13 +176,13 @@ class GenerateReceiptDialog {
     private JLabel     statusLabel;
     private JButton    saveBtn;
 
-    public GenerateReceiptDialog(JFrame parent) {
+    public CS_GenerateReceiptDialog(JFrame parent) {
         this.parent = parent;
-        JDialog dialog = UITheme.createDialog(parent, "Generate Receipt", 680, 580);
+        JDialog dialog = UITheme.createDialog(parent, "Generate Receipt", 680, 560);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("Generate Receipt"), BorderLayout.NORTH);
-        dialog.add(buildBody(),                              BorderLayout.CENTER);
-        dialog.add(buildButtons(dialog),                     BorderLayout.SOUTH);
+        dialog.add(buildBody(),          BorderLayout.CENTER);
+        dialog.add(buildButtons(dialog), BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
 
@@ -189,7 +192,6 @@ class GenerateReceiptDialog {
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(BorderFactory.createEmptyBorder(20, 28, 10, 28));
 
-        // Lookup row
         JPanel lookup = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         lookup.setOpaque(false); lookup.setAlignmentX(Component.LEFT_ALIGNMENT);
         fPaymentId = UITheme.createTextField();
@@ -246,24 +248,23 @@ class GenerateReceiptDialog {
 
     private JPanel buildReceiptCard(String raw) {
         JPanel card = new JPanel(new GridBagLayout());
-        card.setBackground(new Color(248,249,252));
+        card.setBackground(new Color(248, 249, 252));
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(UITheme.BORDER),
-            BorderFactory.createEmptyBorder(16,20,16,20)));
+            BorderFactory.createEmptyBorder(16, 20, 16, 20)));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
 
         GridBagConstraints g = new GridBagConstraints();
-        g.anchor=GridBagConstraints.WEST; g.insets=new Insets(4,0,4,20);
+        g.anchor = GridBagConstraints.WEST; g.insets = new Insets(4, 0, 4, 20);
 
-        String[] lines = raw.split("\n");
         int row = 0;
-        for (String line : lines) {
+        for (String line : raw.split("\n")) {
             if (line.startsWith("=") || line.isBlank()) continue;
             int ci = line.indexOf(":");
             if (ci < 0) continue;
             String key = line.substring(0, ci).trim();
-            String val = line.substring(ci+1).trim();
+            String val = line.substring(ci + 1).trim();
             g.gridx=0; g.gridy=row; g.weightx=0;
             card.add(UITheme.createLabel(key, UITheme.FONT_BOLD, UITheme.TEXT_SECONDARY), g);
             g.gridx=1; g.weightx=1;
@@ -285,10 +286,10 @@ class GenerateReceiptDialog {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  EditProfileDialog
+//  CS_EditProfileDialog
 // ══════════════════════════════════════════════════════════════════════════════
 
-class EditProfileDialog {
+class CS_EditProfileDialog {
 
     private final JFrame              parent;
     private final CounterStaff        user;
@@ -298,15 +299,13 @@ class EditProfileDialog {
     private JPasswordField fCurrent, fNew;
     private JLabel         statusLabel;
 
-    public EditProfileDialog(JFrame parent, CounterStaff user) {
-        this.parent = parent;
-        this.user   = user;
-
-        JDialog dialog = UITheme.createDialog(parent, "Edit Profile", 580, 580);
+    public CS_EditProfileDialog(JFrame parent, CounterStaff user) {
+        this.parent = parent; this.user = user;
+        JDialog dialog = UITheme.createDialog(parent, "Edit Profile", 560, 560);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("Edit Profile"), BorderLayout.NORTH);
-        dialog.add(buildBody(),                          BorderLayout.CENTER);
-        dialog.add(buildButtons(dialog),                 BorderLayout.SOUTH);
+        dialog.add(buildBody(),          BorderLayout.CENTER);
+        dialog.add(buildButtons(dialog), BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
 
@@ -314,18 +313,16 @@ class EditProfileDialog {
         JPanel body = new JPanel(new GridBagLayout());
         body.setBackground(UITheme.WHITE);
         body.setBorder(BorderFactory.createEmptyBorder(20, 28, 10, 28));
-
         GridBagConstraints g = new GridBagConstraints();
-        g.fill=GridBagConstraints.HORIZONTAL; g.insets=new Insets(6,0,6,16);
-        g.anchor=GridBagConstraints.WEST;
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.insets = new Insets(6, 0, 6, 16); g.anchor = GridBagConstraints.WEST;
 
-        fName     = pre(new JTextField(user.getName()));
-        fAge      = pre(new JTextField(String.valueOf(user.getAge())));
-        fEmail    = pre(new JTextField(user.getEmail()));
-        fUsername = pre(new JTextField(user.getUsername()));
-        fContact  = pre(new JTextField(user.getContact()));
-        fCurrent  = new JPasswordField(); stylePass(fCurrent);
-        fNew      = new JPasswordField(); stylePass(fNew);
+        fName     = field(user.getName());
+        fAge      = field(String.valueOf(user.getAge()));
+        fEmail    = field(user.getEmail());
+        fUsername = field(user.getUsername());
+        fContact  = field(user.getContact());
+        fCurrent  = pass(); fNew = pass();
 
         addPair(body, g, 0, "Full Name",  fName,    "Age",     fAge);
         addPair(body, g, 1, "Email",      fEmail,   "Contact", fContact);
@@ -335,24 +332,25 @@ class EditProfileDialog {
         g.gridx=1; g.weightx=1; g.gridwidth=3;
         body.add(fUsername, g); g.gridwidth=1;
 
-        // Divider
-        g.gridx=0; g.gridy=3; g.gridwidth=4; g.insets=new Insets(12,0,4,0);
+        // Password section label
+        JSeparator sep = new JSeparator(); sep.setForeground(UITheme.BORDER);
+        g.gridx=0; g.gridy=3; g.gridwidth=4; g.insets=new Insets(14,0,4,0);
+        body.add(sep, g);
+        g.gridy=4;
         body.add(UITheme.createLabel("Change Password", UITheme.FONT_BOLD, UITheme.TEXT_SECONDARY), g);
         g.gridwidth=1; g.insets=new Insets(6,0,6,16);
 
-        addPair(body, g, 4, "Current Password *", fCurrent, "New Password", fNew);
+        addPair(body, g, 5, "Current Password *", fCurrent, "New Password", fNew);
 
         JLabel hint = UITheme.createLabel("Current password is required to save any changes.",
             UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
-        g.gridx=0; g.gridy=5; g.gridwidth=4; g.insets=new Insets(2,0,10,0);
+        g.gridx=0; g.gridy=6; g.gridwidth=4; g.insets=new Insets(2,0,10,0);
         body.add(hint, g); g.gridwidth=1; g.insets=new Insets(6,0,6,16);
 
         statusLabel = UITheme.createLabel(" ", UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
-        g.gridx=0; g.gridy=6; g.gridwidth=4; body.add(statusLabel, g);
+        g.gridx=0; g.gridy=7; g.gridwidth=4; body.add(statusLabel, g);
 
-        JScrollPane sp = new JScrollPane(body);
-        sp.setBorder(null); sp.getViewport().setBackground(UITheme.WHITE);
-        return sp;
+        return UITheme.formScrollPane(body);
     }
 
     private JPanel buildButtons(JDialog dialog) {
@@ -366,12 +364,11 @@ class EditProfileDialog {
             if (cur.isEmpty()) { setStatus("Current password is required.", false); return; }
             int age; try { age = Integer.parseInt(fAge.getText().trim()); }
             catch (NumberFormatException ex) { setStatus("Age must be a number.", false); return; }
-            String newPass = new String(fNew.getPassword());
-            if (newPass.isEmpty()) newPass = user.getPassword();
-
+            String np = new String(fNew.getPassword());
+            if (np.isEmpty()) np = user.getPassword();
             OperationResult r = service.updateProfile(user,
                 fName.getText().trim(), age, fEmail.getText().trim(),
-                fUsername.getText().trim(), cur, newPass, fContact.getText().trim());
+                fUsername.getText().trim(), cur, np, fContact.getText().trim());
             setStatus(r.getMessage(), r.getResult());
             if (r.getResult()) { fCurrent.setText(""); fNew.setText(""); }
         });
@@ -380,41 +377,20 @@ class EditProfileDialog {
             fName.setText(user.getName()); fAge.setText(String.valueOf(user.getAge()));
             fEmail.setText(user.getEmail()); fUsername.setText(user.getUsername());
             fContact.setText(user.getContact()); fCurrent.setText(""); fNew.setText("");
-            setStatus("Fields reset.", true);
+            setStatus("Fields reset to current values.", true);
         });
 
         cancel.addActionListener(e -> dialog.dispose());
         return UITheme.buttonRow(cancel, reset, save);
     }
 
-    private JTextField pre(JTextField f) {
-        f.setFont(UITheme.FONT_REGULAR); f.setForeground(UITheme.TEXT_PRIMARY);
-        f.setBackground(UITheme.WHITE); f.setCaretColor(UITheme.ACCENT);
-        f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(UITheme.BORDER),
-            BorderFactory.createEmptyBorder(4,10,4,10)));
-        f.addFocusListener(new FocusAdapter() {
-            @Override public void focusGained(FocusEvent e) {
-                f.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(UITheme.BORDER_FOCUS),
-                    BorderFactory.createEmptyBorder(4,10,4,10)));
-            }
-            @Override public void focusLost(FocusEvent e) {
-                f.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(UITheme.BORDER),
-                    BorderFactory.createEmptyBorder(4,10,4,10)));
-            }
-        });
-        return f;
+    private JTextField field(String val) {
+        JTextField f = UITheme.createTextField(); f.setText(val); return f;
     }
 
-    private void stylePass(JPasswordField f) {
-        f.setFont(UITheme.FONT_REGULAR); f.setForeground(UITheme.TEXT_PRIMARY);
-        f.setBackground(UITheme.WHITE); f.setCaretColor(UITheme.ACCENT);
-        f.setPreferredSize(new Dimension(200, UITheme.INPUT_H));
-        f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(UITheme.BORDER),
-            BorderFactory.createEmptyBorder(4,10,4,10)));
+    private JPasswordField pass() {
+        JPasswordField f = UITheme.createPasswordField();
+        f.setPreferredSize(new Dimension(200, UITheme.INPUT_H)); return f;
     }
 
     private void addPair(JPanel p, GridBagConstraints g, int row,

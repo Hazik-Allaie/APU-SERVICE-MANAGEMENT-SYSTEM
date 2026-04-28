@@ -8,8 +8,6 @@ public class Technician extends User {
     
      @Override
     public void displayMenu() {
-        TechnicianDashboard dashboard = new TechnicianDashboard(this);
-        dashboard.showMenu();
        
     }
 }
