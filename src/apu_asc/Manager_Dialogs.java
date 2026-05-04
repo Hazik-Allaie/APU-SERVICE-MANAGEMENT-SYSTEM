@@ -12,6 +12,8 @@ import java.util.ArrayList;
 
 class Manager_SetPricesDialog {
 
+    private final ManagerService service = new ManagerService();
+
     public Manager_SetPricesDialog(JFrame parent) {
         JDialog dialog = UITheme.createDialog(parent, "Set Service Prices", 500, 320);
         dialog.setLayout(new BorderLayout());
@@ -24,13 +26,11 @@ class Manager_SetPricesDialog {
         JPanel body = new JPanel(new GridBagLayout());
         body.setBackground(UITheme.WHITE);
         body.setBorder(BorderFactory.createEmptyBorder(24, 32, 10, 32));
-
         GridBagConstraints g = new GridBagConstraints();
         g.fill = GridBagConstraints.HORIZONTAL;
-        g.insets = new Insets(8, 0, 8, 16);
-        g.anchor = GridBagConstraints.WEST;
+        g.insets = new Insets(8, 0, 8, 16); g.anchor = GridBagConstraints.WEST;
 
-        Double[] prices = FileHandler.getPrice();
+        Double[] prices = service.getPrices();
 
         JTextField fNormal = UITheme.createTextField();
         fNormal.setText(String.format("%.2f", prices[0]));
@@ -40,7 +40,6 @@ class Manager_SetPricesDialog {
         fMajor.setText(String.format("%.2f", prices[1]));
         fMajor.setPreferredSize(new Dimension(280, UITheme.INPUT_H));
 
-        // Normal row
         g.gridx=0; g.gridy=0; g.weightx=0;
         body.add(UITheme.createLabel("Normal Service (RM)", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY), g);
         g.gridx=1; g.weightx=1; body.add(fNormal, g);
@@ -51,7 +50,6 @@ class Manager_SetPricesDialog {
         g.gridx=0; g.gridy=1; g.gridwidth=3; g.insets=new Insets(4,0,4,0);
         body.add(sep, g); g.gridwidth=1; g.insets=new Insets(8,0,8,16);
 
-        // Major row
         g.gridx=0; g.gridy=2; g.weightx=0;
         body.add(UITheme.createLabel("Major Service (RM)", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY), g);
         g.gridx=1; g.weightx=1; body.add(fMajor, g);
@@ -62,8 +60,9 @@ class Manager_SetPricesDialog {
         g.gridx=0; g.gridy=3; g.gridwidth=3; g.insets=new Insets(2,0,0,0);
         body.add(status, g);
 
-        JButton save = UITheme.createPrimaryButton("Save Prices");
+        JButton save   = UITheme.createPrimaryButton("Save Prices");
         JButton cancel = UITheme.createLinkButton("Cancel");
+
         save.addActionListener(e -> {
             double normal, major;
             try {
@@ -73,16 +72,17 @@ class Manager_SetPricesDialog {
                 status.setForeground(UITheme.ERROR);
                 status.setText("Please enter valid numeric values."); return;
             }
-            if (normal <= 0 || major <= 0) {
+            OperationResult r = service.savePrices(normal, major);
+            if (r.getResult()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Prices saved!\nNormal: RM " + String.format("%.2f", normal)
+                    + "  |  Major: RM " + String.format("%.2f", major),
+                    "Saved", JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+            } else {
                 status.setForeground(UITheme.ERROR);
-                status.setText("Prices must be greater than zero."); return;
+                status.setText(r.getMessage());
             }
-            FileHandler.savePrice(normal, major);
-            JOptionPane.showMessageDialog(dialog,
-                "Prices saved!\nNormal: RM " + String.format("%.2f", normal)
-                + "  |  Major: RM " + String.format("%.2f", major),
-                "Saved", JOptionPane.INFORMATION_MESSAGE);
-            dialog.dispose();
         });
         cancel.addActionListener(e -> dialog.dispose());
 
@@ -108,7 +108,8 @@ class Manager_SetPricesDialog {
 
 class Manager_ViewFeedbacksDialog {
 
-    private DefaultTableModel model;
+    private final ManagerService  service = new ManagerService();
+    private DefaultTableModel     model;
 
     public Manager_ViewFeedbacksDialog(JFrame parent) {
         JDialog dialog = UITheme.createDialog(parent, "Customer Feedbacks", 880, 560);
@@ -129,6 +130,7 @@ class Manager_ViewFeedbacksDialog {
         filterRow.setOpaque(false);
         filterRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
         filterRow.add(UITheme.createLabel("Filter by Status:", UITheme.FONT_BOLD, UITheme.TEXT_SECONDARY));
+
         JComboBox<String> statusFilter = UITheme.createComboBox(
             new String[]{"All", "Pending", "Completed"});
         statusFilter.setPreferredSize(new Dimension(160, UITheme.INPUT_H));
@@ -151,7 +153,6 @@ class Manager_ViewFeedbacksDialog {
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
-        // Wrap comments column
         table.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override public Component getTableCellRendererComponent(
                     JTable t, Object v, boolean sel, boolean f, int row, int col) {
@@ -165,7 +166,6 @@ class Manager_ViewFeedbacksDialog {
             }
         });
 
-        // Colour-code Status column
         table.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
             @Override public Component getTableCellRendererComponent(
                     JTable t, Object v, boolean sel, boolean f, int row, int col) {
@@ -199,11 +199,9 @@ class Manager_ViewFeedbacksDialog {
 
     private void loadData(String status) {
         model.setRowCount(0);
-        for (Appointment a : FileHandler.getAllAppointments()) {
-            if (!status.equals("All") && !a.getStatus().equals(status)) continue;
+        for (Appointment a : service.getFeedbacksByStatus(status))
             model.addRow(new Object[]{a.getAppointmentid(), a.getCustomerid(),
                 a.getTechnicianid(), a.getDate(), a.getStatus(), a.getComments()});
-        }
     }
 }
 
@@ -212,6 +210,8 @@ class Manager_ViewFeedbacksDialog {
 // ══════════════════════════════════════════════════════════════════════════════
 
 class Manager_ViewReportsDialog {
+
+    private final ManagerService service = new ManagerService();
 
     public Manager_ViewReportsDialog(JFrame parent) {
         JDialog dialog = UITheme.createDialog(parent, "Reports", 800, 600);
@@ -225,31 +225,10 @@ class Manager_ViewReportsDialog {
     }
 
     private JScrollPane buildBody() {
-        ArrayList<Appointment> appointments = FileHandler.getAllAppointments();
-        ArrayList<User>        users        = FileHandler.getallusers();
-
-        int totalAppts = 0, completed = 0, pending = 0;
-        double totalRev = 0, normalRev = 0, majorRev = 0;
-        int normalCount = 0, majorCount = 0;
-
-        for (Appointment a : appointments) {
-            totalAppts++;
-            if (a.getStatus().equals("Completed")) {
-                completed++;
-                totalRev += a.getPrice();
-                if (a.getServicetype().equalsIgnoreCase("Normal")) {
-                    normalRev += a.getPrice(); normalCount++;
-                } else { majorRev += a.getPrice(); majorCount++; }
-            } else pending++;
-        }
-
-        int managers = 0, cs = 0, techs = 0, customers = 0;
-        for (User u : users) switch (u.getRole()) {
-            case "Manager"      -> managers++;
-            case "CounterStaff" -> cs++;
-            case "Technician"   -> techs++;
-            case "Customer"     -> customers++;
-        }
+        int[]    apptStats    = service.getAppointmentStats();
+        double[] revenueStats = service.getRevenueStats();
+        int[]    svcCounts    = service.getServiceTypeCounts();
+        int[]    userCounts   = service.getUserCounts();
 
         JPanel body = new JPanel();
         body.setBackground(UITheme.WHITE);
@@ -259,20 +238,23 @@ class Manager_ViewReportsDialog {
         body.add(sectionLabel("Appointment Summary"));
         body.add(Box.createRigidArea(new Dimension(0, 12)));
         JPanel row1 = cardRow();
-        row1.add(statCard("Total Appointments", String.valueOf(totalAppts), new Color(37, 82, 148)));
-        row1.add(statCard("Completed",          String.valueOf(completed),  new Color(22, 163, 74)));
-        row1.add(statCard("Pending",            String.valueOf(pending),    new Color(180, 100, 20)));
+        row1.add(statCard("Total Appointments", String.valueOf(apptStats[0]), new Color(37, 82, 148)));
+        row1.add(statCard("Completed",          String.valueOf(apptStats[1]), new Color(22, 163, 74)));
+        row1.add(statCard("Pending",            String.valueOf(apptStats[2]), new Color(180, 100, 20)));
         body.add(row1);
 
         body.add(Box.createRigidArea(new Dimension(0, 20)));
         body.add(sectionLabel("Revenue Summary"));
         body.add(Box.createRigidArea(new Dimension(0, 12)));
         JPanel row2 = cardRow();
-        row2.add(statCard("Total Revenue",  "RM " + String.format("%.2f", totalRev), new Color(37, 82, 148)));
-        row2.add(statCard("Normal Service", "RM " + String.format("%.2f", normalRev)
-            + " (" + normalCount + ")",  new Color(16, 150, 100)));
-        row2.add(statCard("Major Service",  "RM " + String.format("%.2f", majorRev)
-            + " (" + majorCount + ")",   new Color(139, 92, 246)));
+        row2.add(statCard("Total Revenue",
+            "RM " + String.format("%.2f", revenueStats[0]), new Color(37, 82, 148)));
+        row2.add(statCard("Normal Service",
+            "RM " + String.format("%.2f", revenueStats[1]) + " (" + svcCounts[0] + ")",
+            new Color(16, 150, 100)));
+        row2.add(statCard("Major Service",
+            "RM " + String.format("%.2f", revenueStats[2]) + " (" + svcCounts[1] + ")",
+            new Color(139, 92, 246)));
         body.add(row2);
 
         body.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -281,10 +263,10 @@ class Manager_ViewReportsDialog {
         JPanel row3 = new JPanel(new GridLayout(1, 4, 16, 0));
         row3.setOpaque(false); row3.setAlignmentX(Component.LEFT_ALIGNMENT);
         row3.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-        row3.add(statCard("Managers",      String.valueOf(managers),  new Color(37, 82, 148)));
-        row3.add(statCard("Counter Staff", String.valueOf(cs),        new Color(16, 150, 100)));
-        row3.add(statCard("Technicians",   String.valueOf(techs),     new Color(180, 100, 20)));
-        row3.add(statCard("Customers",     String.valueOf(customers), new Color(139, 92, 246)));
+        row3.add(statCard("Managers",      String.valueOf(userCounts[0]), new Color(37, 82, 148)));
+        row3.add(statCard("Counter Staff", String.valueOf(userCounts[1]), new Color(16, 150, 100)));
+        row3.add(statCard("Technicians",   String.valueOf(userCounts[2]), new Color(180, 100, 20)));
+        row3.add(statCard("Customers",     String.valueOf(userCounts[3]), new Color(139, 92, 246)));
         body.add(row3);
 
         body.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -295,9 +277,10 @@ class Manager_ViewReportsDialog {
         DefaultTableModel tm = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        for (Appointment a : appointments)
+        for (Appointment a : service.getAllAppointmentsForReport())
             tm.addRow(new Object[]{a.getAppointmentid(), a.getCustomerid(), a.getTechnicianid(),
-                a.getServicetype(), a.getDate(), a.getStatus(), String.format("%.2f", a.getPrice())});
+                a.getServicetype(), a.getDate(), a.getStatus(),
+                String.format("%.2f", a.getPrice())});
 
         JTable table = new JTable(tm);
         UITheme.styleTable(table);
