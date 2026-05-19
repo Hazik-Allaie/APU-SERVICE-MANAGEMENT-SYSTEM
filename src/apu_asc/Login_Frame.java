@@ -17,11 +17,13 @@ public class Login_Frame extends JFrame {
     private JButton        loginButton;
 
     public Login_Frame() {
+        System.out.println(new java.io.File("APU_ASC_LOGO.png").getAbsolutePath());
         setTitle("APU-ASC  |  Sign In");
         setSize(880, 560);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
+        setIconImage(new ImageIcon("APU_ASC_LOGO.png").getImage());
 
         JPanel root = new JPanel(new GridLayout(1, 2));
         root.add(buildBrand());
@@ -60,10 +62,18 @@ public class Login_Frame extends JFrame {
         inner.setOpaque(false);
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
 
-        JLabel carIcon = new JLabel("🚗");
-        carIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 52));
-        carIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
+       ImageIcon rawLogo = new ImageIcon("APU_ASC_LOGO.png");
+Image originalLogo = rawLogo.getImage();
 
+// Maintain aspect ratio based on width of 120
+int originalWidth = rawLogo.getIconWidth();
+int originalHeight = rawLogo.getIconHeight();
+int targetWidth = 180;
+int targetHeight = (int) ((double) originalHeight / originalWidth * targetWidth);
+
+Image scaledLogo = originalLogo.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+JLabel carIcon = new JLabel(new ImageIcon(scaledLogo));
+carIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
         JLabel appName = new JLabel("APU-ASC");
         appName.setFont(new Font("Segoe UI", Font.BOLD, 34));
         appName.setForeground(Color.WHITE);
@@ -110,22 +120,32 @@ public class Login_Frame extends JFrame {
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.setPreferredSize(new Dimension(320, 360));
 
-        JLabel title = UITheme.createLabel("Welcome back", UITheme.FONT_TITLE, UITheme.TEXT_PRIMARY);
+        JLabel title = new JLabel("Welcome back 👋");
+        title.setFont(new Font("Segoe UI Emoji", Font.BOLD, 28));
+        title.setForeground(UITheme.TEXT_PRIMARY);
         title.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+        
         JLabel sub = UITheme.createLabel("Sign in to your account",
             UITheme.FONT_REGULAR, UITheme.TEXT_SECONDARY);
         sub.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Username
-        JLabel userLbl = UITheme.createLabel("Username", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY);
+        ImageIcon rawUser = new ImageIcon("USER_ICON.png");
+        Image scaledUser = rawUser.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+        JLabel userLbl = new JLabel("  Username", new ImageIcon(scaledUser), JLabel.LEFT);
+        userLbl.setFont(UITheme.FONT_BOLD);
+        userLbl.setForeground(UITheme.TEXT_PRIMARY);
         userLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         usernameField = UITheme.createTextField();
         usernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, UITheme.INPUT_H));
         usernameField.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Password
-        JLabel passLbl = UITheme.createLabel("Password", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY);
+        ImageIcon rawPass = new ImageIcon("password_icon.png");
+        Image scaledPass = rawPass.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+        JLabel passLbl = new JLabel("  Password", new ImageIcon(scaledPass), JLabel.LEFT);
+        passLbl.setFont(UITheme.FONT_BOLD);
+        passLbl.setForeground(UITheme.TEXT_PRIMARY);
         passLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         passwordField = UITheme.createPasswordField();
         passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, UITheme.INPUT_H));
@@ -138,6 +158,10 @@ public class Login_Frame extends JFrame {
 
         // Login button
         loginButton = UITheme.createPrimaryButton("Sign In");
+        ImageIcon rawSign = new ImageIcon("sign_in_icon.png");
+        Image scaledSign = rawSign.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+        loginButton.setIcon(new ImageIcon(scaledSign));
+        loginButton.setIconTextGap(8);
         loginButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, UITheme.BUTTON_H));
         loginButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         loginButton.addActionListener(e -> handleLogin());

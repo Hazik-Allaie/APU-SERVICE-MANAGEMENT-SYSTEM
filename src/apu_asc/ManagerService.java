@@ -174,4 +174,56 @@ public class ManagerService {
     public ArrayList<Appointment> getAllAppointmentsForReport() {
         return FileHandler.getAllAppointments();
     }
+    // ── View All Appointments ─────────────────────────────────────────────────
+
+public ArrayList<Appointment> getAppointmentsByStatus(String status) {
+    ArrayList<Appointment> result = new ArrayList<>();
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        if (status.equals("All") || a.getStatus().equals(status))
+            result.add(a);
+    }
+    return result;
+}
+
+public ArrayList<Appointment> getAppointmentsByTechnician(String technicianId) {
+    ArrayList<Appointment> result = new ArrayList<>();
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        if (a.getTechnicianid().equals(technicianId))
+            result.add(a);
+    }
+    return result;
+}
+
+// ── Technician Performance ────────────────────────────────────────────────
+
+public ArrayList<User> getAllTechnicians() {
+    ArrayList<User> result = new ArrayList<>();
+    for (User u : FileHandler.getallusers())
+        if (u.getRole().equals("Technician"))
+            result.add(u);
+    return result;
+}
+
+public int[] getTechnicianStats(String technicianId) {
+    // returns [total, completed, pending, inProgress]
+    int total = 0, completed = 0, pending = 0, inProgress = 0;
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        if (!a.getTechnicianid().equals(technicianId)) continue;
+        total++;
+        switch (a.getStatus()) {
+            case "Completed"   -> completed++;
+            case "Pending"     -> pending++;
+            case "In Progress" -> inProgress++;
+        }
+    }
+    return new int[]{total, completed, pending, inProgress};
+}
+
+public double getTechnicianRevenue(String technicianId) {
+    double revenue = 0;
+    for (Appointment a : FileHandler.getAllAppointments())
+        if (a.getTechnicianid().equals(technicianId) && a.getStatus().equals("Completed"))
+            revenue += a.getPrice();
+    return revenue;
+}
 }
