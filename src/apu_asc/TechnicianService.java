@@ -141,4 +141,83 @@ public double getTechnicianRevenue(String technicianId) {
             revenue += a.getPrice();
     return revenue;
 }
+// ── View My Schedule ──────────────────────────────────────────────────────
+
+public java.util.LinkedHashMap<String, java.util.ArrayList<Appointment>> getWeeklySchedule(String technicianId) {
+    java.util.LinkedHashMap<String, java.util.ArrayList<Appointment>> schedule = new java.util.LinkedHashMap<>();
+
+    java.time.LocalDate today = java.time.LocalDate.now();
+    java.time.LocalDate monday = today.with(java.time.DayOfWeek.MONDAY);
+
+    for (int i = 0; i < 7; i++) {
+        java.time.LocalDate day = monday.plusDays(i);
+        schedule.put(day.toString(), new java.util.ArrayList<>());
+    }
+
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        if (!a.getTechnicianid().equals(technicianId)) continue;
+        if (schedule.containsKey(a.getDate()))
+            schedule.get(a.getDate()).add(a);
+    }
+
+    return schedule;
+}
+
+public String getDayName(String date) {
+    try {
+        java.time.LocalDate d = java.time.LocalDate.parse(date);
+        return d.getDayOfWeek().toString().substring(0, 1)
+            + d.getDayOfWeek().toString().substring(1).toLowerCase();
+    } catch (Exception e) {
+        return date;
+    }
+}
+
+// ── Job History ───────────────────────────────────────────────────────────
+
+public java.util.ArrayList<Appointment> getJobHistory(String technicianId) {
+    java.util.ArrayList<Appointment> history = new java.util.ArrayList<>();
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        if (a.getTechnicianid().equals(technicianId)
+                && a.getStatus().equals("Completed"))
+            history.add(a);
+    }
+    return history;
+}
+
+public java.util.ArrayList<Appointment> getJobHistoryByDateRange(
+        String technicianId, String fromDate, String toDate) {
+    java.util.ArrayList<Appointment> result = new java.util.ArrayList<>();
+    try {
+        java.time.LocalDate from = java.time.LocalDate.parse(fromDate);
+        java.time.LocalDate to   = java.time.LocalDate.parse(toDate);
+        for (Appointment a : FileHandler.getAllAppointments()) {
+            if (!a.getTechnicianid().equals(technicianId)) continue;
+            if (!a.getStatus().equals("Completed")) continue;
+            java.time.LocalDate apptDate = java.time.LocalDate.parse(a.getDate());
+            if (!apptDate.isBefore(from) && !apptDate.isAfter(to))
+                result.add(a);
+        }
+    } catch (Exception e) {
+        System.out.println("Date parse error: " + e.getMessage());
+    }
+    return result;
+}
+
+public double getJobHistoryRevenue(java.util.ArrayList<Appointment> jobs) {
+    double total = 0;
+    for (Appointment a : jobs)
+        total += a.getPrice();
+    return total;
+}
+
+public int[] getJobHistoryStats(java.util.ArrayList<Appointment> jobs) {
+    // returns [total, normalCount, majorCount]
+    int normal = 0, major = 0;
+    for (Appointment a : jobs) {
+        if (a.getServicetype().equalsIgnoreCase("Normal")) normal++;
+        else major++;
+    }
+    return new int[]{jobs.size(), normal, major};
+}
 }
