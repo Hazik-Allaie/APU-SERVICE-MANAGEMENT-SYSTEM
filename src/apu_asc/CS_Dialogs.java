@@ -4,6 +4,8 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.util.ArrayList;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  CS_CollectPaymentDialog
@@ -406,5 +408,211 @@ class CS_EditProfileDialog {
     private void setStatus(String msg, boolean ok) {
         statusLabel.setForeground(ok ? UITheme.SUCCESS : UITheme.ERROR);
         statusLabel.setText(msg);
+    }
+}
+// ══════════════════════════════════════════════════════════════════════════════
+//  CS_SearchAppointmentsDialog
+// ══════════════════════════════════════════════════════════════════════════════
+
+class CS_SearchAppointmentsDialog {
+
+    private final JFrame              parent;
+    private final CounterStaffService service = new CounterStaffService();
+    private DefaultTableModel         model;
+
+    public CS_SearchAppointmentsDialog(JFrame parent) {
+        this.parent = parent;
+        JDialog dialog = UITheme.createDialog(parent, "Search Appointments", 900, 560);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(UITheme.dialogHeader("Search Appointments"), BorderLayout.NORTH);
+        dialog.add(buildCenter(),        BorderLayout.CENTER);
+        dialog.add(buildButtons(dialog), BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
+    private JPanel buildCenter() {
+        JPanel outer = new JPanel(new BorderLayout());
+        outer.setBackground(UITheme.WHITE);
+        outer.setBorder(BorderFactory.createEmptyBorder(16, 24, 12, 24));
+
+        // Search bar
+        JPanel searchRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        searchRow.setOpaque(false);
+        searchRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JComboBox<String> searchType = UITheme.createComboBox(
+            new String[]{"Search by Date", "Search by Customer ID"});
+        searchType.setPreferredSize(new Dimension(200, UITheme.INPUT_H));
+
+        JTextField searchField = UITheme.createTextField();
+        searchField.setPreferredSize(new Dimension(220, UITheme.INPUT_H));
+        UITheme.placeholder(searchField, "Enter value...");
+
+        JButton searchBtn = UITheme.createPrimaryButton("Search");
+        searchBtn.setPreferredSize(new Dimension(100, UITheme.INPUT_H));
+
+        JLabel countLabel = UITheme.createLabel("",
+            UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
+
+        searchRow.add(searchType);
+        searchRow.add(searchField);
+        searchRow.add(searchBtn);
+        searchRow.add(Box.createRigidArea(new Dimension(12, 0)));
+        searchRow.add(countLabel);
+
+        // Table
+        String[] cols = {"Appointment ID", "Customer ID", "Technician ID",
+                         "Date", "Time", "Service Type", "Price (RM)", "Status"};
+        model = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        JTable table = new JTable(model);
+        UITheme.styleTable(table);
+
+        int[] widths = {110, 100, 110, 90, 70, 110, 90, 100};
+        for (int i = 0; i < widths.length; i++)
+            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+
+        // Status colour renderer
+        table.getColumnModel().getColumn(7).setCellRenderer(
+            new DefaultTableCellRenderer() {
+                @Override public Component getTableCellRendererComponent(
+                        JTable t, Object v, boolean sel, boolean f,
+                        int row, int col) {
+                    super.getTableCellRendererComponent(t,v,sel,f,row,col);
+                    setBorder(BorderFactory.createEmptyBorder(0,14,0,14));
+                    if (!sel) {
+                        setBackground(row%2==0 ? UITheme.WHITE : UITheme.TABLE_ROW_ALT);
+                        String s = v == null ? "" : v.toString();
+                        setForeground(switch (s) {
+                            case "Completed"   -> UITheme.SUCCESS;
+                            case "In Progress" -> new Color(37, 82, 148);
+                            case "Pending"     -> UITheme.WARNING;
+                            default            -> UITheme.TEXT_PRIMARY;
+                        });
+                    } else {
+                        setBackground(UITheme.TABLE_SELECTED);
+                        setForeground(UITheme.TEXT_PRIMARY);
+                    }
+                    return this;
+                }
+            });
+
+        model.addTableModelListener(e ->
+            countLabel.setText("Found " + model.getRowCount() + " result(s)"));
+
+        searchBtn.addActionListener(e -> {
+            String val  = searchField.getText().trim();
+            String type = (String) searchType.getSelectedItem();
+            if (val.isEmpty()) {
+                JOptionPane.showMessageDialog(parent,
+                    "Please enter a search value.", "Required",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            model.setRowCount(0);
+            java.util.ArrayList<Appointment> results;
+            if (type.equals("Search by Date"))
+                results = service.searchAppointmentsByDate(val);
+            else
+                results = service.searchAppointmentsByCustomerId(val);
+
+            for (Appointment a : results)
+                model.addRow(new Object[]{
+                    a.getAppointmentid(), a.getCustomerid(),
+                    a.getTechnicianid(), a.getDate(), a.getTime(),
+                    a.getServicetype(),
+                    String.format("%.2f", a.getPrice()), a.getStatus()
+                });
+
+            if (model.getRowCount() == 0)
+                JOptionPane.showMessageDialog(parent,
+                    "No appointments found for: " + val,
+                    "No Results", JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        outer.add(searchRow,                       BorderLayout.NORTH);
+        outer.add(UITheme.createScrollPane(table), BorderLayout.CENTER);
+        return outer;
+    }
+
+    private JPanel buildButtons(JDialog dialog) {
+        JButton close = UITheme.createLinkButton("Close");
+        close.addActionListener(e -> dialog.dispose());
+        return UITheme.buttonRow(close);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CS_DailySummaryDialog
+// ══════════════════════════════════════════════════════════════════════════════
+
+class CS_DailySummaryDialog {
+
+    private final JFrame              parent;
+    private final CounterStaffService service = new CounterStaffService();
+
+    public CS_DailySummaryDialog(JFrame parent) {
+        this.parent = parent;
+        JDialog dialog = UITheme.createDialog(parent, "Daily Summary", 680, 580);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(UITheme.dialogHeader("Daily Summary"), BorderLayout.NORTH);
+        dialog.add(buildBody(),          BorderLayout.CENTER);
+        dialog.add(buildButtons(dialog), BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
+    private JPanel buildBody() {
+        JPanel outer = new JPanel(new BorderLayout());
+        outer.setBackground(UITheme.WHITE);
+        outer.setBorder(BorderFactory.createEmptyBorder(16, 24, 12, 24));
+
+        JLabel hint = UITheme.createLabel(
+            "Click 'Generate' to create today's appointment summary.",
+            UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
+        hint.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JTextArea textArea = new JTextArea();
+        textArea.setFont(new Font("Consolas", Font.PLAIN, 12));
+        textArea.setForeground(new Color(20, 30, 60));
+        textArea.setBackground(new Color(248, 249, 252));
+        textArea.setEditable(false);
+        textArea.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        textArea.setText("Press 'Generate Summary' to see today's report...");
+
+        JScrollPane scroll = new JScrollPane(textArea);
+        scroll.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
+
+        JButton generateBtn = UITheme.createPrimaryButton("Generate Summary");
+        generateBtn.setPreferredSize(new Dimension(180, UITheme.BUTTON_H));
+        generateBtn.addActionListener(e -> {
+            String summary = service.generateDailySummary();
+            textArea.setText(summary);
+            textArea.setCaretPosition(0);
+        });
+
+        JPanel topRow = new JPanel(new BorderLayout());
+        topRow.setOpaque(false);
+        topRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        topRow.add(hint,        BorderLayout.WEST);
+        topRow.add(generateBtn, BorderLayout.EAST);
+
+        outer.add(topRow, BorderLayout.NORTH);
+        outer.add(scroll, BorderLayout.CENTER);
+        return outer;
+    }
+
+    private JPanel buildButtons(JDialog dialog) {
+        JButton save = UITheme.createOutlineButton("Save to File");
+        save.addActionListener(e -> {
+            service.generateDailySummary();
+            String today = java.time.LocalDate.now().toString();
+            JOptionPane.showMessageDialog(parent,
+                "Summary saved to: daily_summary_" + today + ".txt",
+                "Saved", JOptionPane.INFORMATION_MESSAGE);
+        });
+        JButton close = UITheme.createLinkButton("Close");
+        close.addActionListener(e -> dialog.dispose());
+        return UITheme.buttonRow(close, save);
     }
 }

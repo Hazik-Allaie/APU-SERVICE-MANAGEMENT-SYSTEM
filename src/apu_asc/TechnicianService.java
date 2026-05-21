@@ -82,4 +82,63 @@ public class TechnicianService {
         FileHandler.updateAppointment(appointment);
         return new OperationResult(true, "Feedback submitted successfully.");
     }
+    // ── Submit Feedback ───────────────────────────────────────────────────────
+
+public OperationResult submitJobFeedback(String appointmentId,
+        String technicianId, String feedback) {
+    Appointment appointment = getAppointmentById(appointmentId, technicianId);
+
+    if (appointment == null)
+        return new OperationResult(false,
+            "Appointment not found or not assigned to you.");
+
+    if (!appointment.getStatus().equals("Completed"))
+        return new OperationResult(false,
+            "Feedback can only be submitted for completed appointments.");
+
+    if (feedback == null || feedback.trim().isEmpty())
+        return new OperationResult(false, "Feedback cannot be empty.");
+
+    String safeFeedback = feedback.replace(",", ";");
+    appointment.setComments(safeFeedback);
+    FileHandler.updateAppointment(appointment);
+    return new OperationResult(true, "Feedback submitted successfully.");
+}
+
+// ── View Job Details ──────────────────────────────────────────────────────
+
+public Appointment getJobDetails(String appointmentId, String technicianId) {
+    return getAppointmentById(appointmentId, technicianId);
+}
+
+public String getCustomerNameForAppointment(String customerId) {
+    ArrayList<User> users = FileHandler.getallusers();
+    for (User u : users)
+        if (u.getUserid().equals(customerId))
+            return u.getName();
+    return customerId;
+}
+
+public int[] getMyStats(String technicianId) {
+    // returns [total, completed, pending, inProgress]
+    int total = 0, completed = 0, pending = 0, inProgress = 0;
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        if (!a.getTechnicianid().equals(technicianId)) continue;
+        total++;
+        switch (a.getStatus()) {
+            case "Completed"   -> completed++;
+            case "Pending"     -> pending++;
+            case "In Progress" -> inProgress++;
+        }
+    }
+    return new int[]{total, completed, pending, inProgress};
+}
+public double getTechnicianRevenue(String technicianId) {
+    double revenue = 0;
+    for (Appointment a : FileHandler.getAllAppointments())
+        if (a.getTechnicianid().equals(technicianId)
+                && a.getStatus().equals("Completed"))
+            revenue += a.getPrice();
+    return revenue;
+}
 }

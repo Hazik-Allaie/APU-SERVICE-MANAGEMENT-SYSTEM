@@ -360,6 +360,107 @@ public class CounterStaffService {
         
         return receipt.toString();
     }
+    // ── Search Appointments ───────────────────────────────────────────────────
+
+public ArrayList<Appointment> searchAppointmentsByDate(String date) {
+    ArrayList<Appointment> result = new ArrayList<>();
+    for (Appointment a : FileHandler.getAllAppointments())
+        if (a.getDate().equals(date))
+            result.add(a);
+    return result;
+}
+
+public ArrayList<Appointment> searchAppointmentsByCustomerId(String customerId) {
+    ArrayList<Appointment> result = new ArrayList<>();
+    for (Appointment a : FileHandler.getAllAppointments())
+        if (a.getCustomerid().toLowerCase().contains(customerId.toLowerCase()))
+            result.add(a);
+    return result;
+}
+
+// ── Daily Summary ─────────────────────────────────────────────────────────
+
+public String generateDailySummary() {
+    String today = java.time.LocalDate.now().toString();
+    ArrayList<Appointment> todayAppointments = new ArrayList<>();
+
+    for (Appointment a : FileHandler.getAllAppointments())
+        if (a.getDate().equals(today))
+            todayAppointments.add(a);
+
+    int total     = todayAppointments.size();
+    int completed = 0, pending = 0, inProgress = 0;
+    double revenue = 0;
+
+    for (Appointment a : todayAppointments) {
+        switch (a.getStatus()) {
+            case "Completed"   -> { completed++; revenue += a.getPrice(); }
+            case "Pending"     -> pending++;
+            case "In Progress" -> inProgress++;
+        }
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("========================================\n");
+    sb.append("       APU-ASC DAILY SUMMARY\n");
+    sb.append("========================================\n");
+    sb.append("Date: ").append(today).append("\n");
+    sb.append("Generated: ").append(java.time.LocalDateTime.now()
+        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+        .append("\n");
+    sb.append("----------------------------------------\n");
+    sb.append("Total Appointments : ").append(total).append("\n");
+    sb.append("Completed          : ").append(completed).append("\n");
+    sb.append("In Progress        : ").append(inProgress).append("\n");
+    sb.append("Pending            : ").append(pending).append("\n");
+    sb.append("Revenue Today      : RM ").append(String.format("%.2f", revenue)).append("\n");
+    sb.append("----------------------------------------\n");
+    sb.append("APPOINTMENT DETAILS:\n");
+    sb.append("----------------------------------------\n");
+
+    for (Appointment a : todayAppointments) {
+        sb.append("ID       : ").append(a.getAppointmentid()).append("\n");
+        sb.append("Customer : ").append(a.getCustomerid()).append("\n");
+        sb.append("Tech     : ").append(a.getTechnicianid()).append("\n");
+        sb.append("Time     : ").append(a.getTime()).append("\n");
+        sb.append("Service  : ").append(a.getServicetype()).append("\n");
+        sb.append("Price    : RM ").append(String.format("%.2f", a.getPrice())).append("\n");
+        sb.append("Vehicle  : ").append(a.getVehicleDetails()).append("\n");
+        sb.append("Status   : ").append(a.getStatus()).append("\n");
+        sb.append("----------------------------------------\n");
+    }
+
+    // Save to file
+    String filename = "daily_summary_" + today + ".txt";
+    try {
+        java.io.BufferedWriter bw = new java.io.BufferedWriter(
+            new java.io.FileWriter(filename, false));
+        bw.write(sb.toString());
+        bw.close();
+    } catch (java.io.IOException e) {
+        System.out.println("Error: " + e.getMessage());
+    }
+
+    return sb.toString();
+}
+public java.util.ArrayList<Appointment> getAllAppointmentsForCS() {
+    return FileHandler.getAllAppointments();
+}
+
+public int getPendingPaymentsCount() {
+    int count = 0;
+    for (Payment p : FileHandler.getAllPayments())
+        if (p.getStatus().equals("Unpaid")) count++;
+    return count;
+}
+
+public int getTodayAppointmentsCount() {
+    String today = java.time.LocalDate.now().toString();
+    int count = 0;
+    for (Appointment a : FileHandler.getAllAppointments())
+        if (a.getDate().equals(today)) count++;
+    return count;
+}
 }
 
     

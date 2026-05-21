@@ -15,56 +15,442 @@ import java.util.ArrayList;
  */
 class Technician_Frame extends JFrame {
 
-    private final Technician technician;
+    private final Technician        technician;
+    private final TechnicianService service = new TechnicianService();
 
     public Technician_Frame(Technician technician) {
         this.technician = technician;
         setTitle("Technician Dashboard - APU-ASC");
-        setSize(860, 540);
+        setSize(1100, 660);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
+        setIconImage(new ImageIcon("APU_ASC_LOGO.png").getImage());
 
         JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(UITheme.BG);
-        root.add(UITheme.dashboardHeader("Technician Dashboard", technician.getName(), e -> signOut()), BorderLayout.NORTH);
-        root.add(buildCards(),  BorderLayout.CENTER);
-        root.add(UITheme.dashboardFooter("Technician Module", technician.getUserid()), BorderLayout.SOUTH);
+        root.add(buildSidebar(), BorderLayout.WEST);
+        root.add(buildMain(),    BorderLayout.CENTER);
         setContentPane(root);
         setVisible(true);
     }
 
-    private JPanel buildCards() {
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.setBorder(BorderFactory.createEmptyBorder(28, 28, 10, 28));
+    // ── Sidebar ───────────────────────────────────────────────────────────────
 
-        JLabel section = UITheme.createLabel("Quick Actions", UITheme.FONT_BOLD, UITheme.TEXT_SECONDARY);
-        section.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
+    private JPanel buildSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setBackground(new Color(80, 40, 10));
+        sidebar.setPreferredSize(new Dimension(220, 660));
 
-        JPanel grid = new JPanel(new GridLayout(1, 3, 16, 16));
+        JPanel logoPanel = new JPanel();
+        logoPanel.setOpaque(false);
+        logoPanel.setLayout(new BoxLayout(logoPanel, BoxLayout.Y_AXIS));
+        logoPanel.setBorder(BorderFactory.createEmptyBorder(24, 0, 24, 0));
+        logoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        ImageIcon rawLogo = new ImageIcon("APU_ASC_LOGO.png");
+        int lw = 70, lh = (int)((double) rawLogo.getIconHeight()
+            / rawLogo.getIconWidth() * lw);
+        JLabel logoLbl = new JLabel(new ImageIcon(
+            rawLogo.getImage().getScaledInstance(lw, lh, Image.SCALE_SMOOTH)));
+        logoLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel appName = new JLabel("APU-ASC");
+        appName.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        appName.setForeground(Color.WHITE);
+        appName.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel role = new JLabel("Technician Portal");
+        role.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        role.setForeground(new Color(255, 200, 150));
+        role.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        logoPanel.add(logoLbl);
+        logoPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        logoPanel.add(appName);
+        logoPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+        logoPanel.add(role);
+
+        JSeparator sep = new JSeparator();
+        sep.setForeground(new Color(255, 255, 255, 30));
+        sep.setMaximumSize(new Dimension(180, 1));
+
+        // Stats badges in sidebar
+        int[] stats = service.getMyStats(technician.getUserid());
+        JPanel statsPanel = new JPanel();
+        statsPanel.setOpaque(false);
+        statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
+        statsPanel.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        statsPanel.setMaximumSize(new Dimension(220, 120));
+
+        JPanel profileRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
+        profileRow.setOpaque(false);
+        profileRow.setMaximumSize(new Dimension(220, 60));
+        JLabel techImg = new JLabel(scaledIcon("technician_icon.png", 32, 32));
+        JPanel techInfo = new JPanel();
+        techInfo.setOpaque(false);
+        techInfo.setLayout(new BoxLayout(techInfo, BoxLayout.Y_AXIS));
+        JLabel techName = new JLabel(technician.getName());
+        techName.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        techName.setForeground(Color.WHITE);
+        JLabel techId = new JLabel(technician.getUserid());
+        techId.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        techId.setForeground(new Color(255, 200, 150));
+        techInfo.add(techName);
+        techInfo.add(techId);
+        profileRow.add(techImg);
+        profileRow.add(techInfo);
+
+        // Mini stats
+        JPanel miniStats = new JPanel(new GridLayout(1, 3, 6, 0));
+        miniStats.setOpaque(false);
+        miniStats.setMaximumSize(new Dimension(200, 50));
+        miniStats.add(miniStatCard(String.valueOf(stats[0]), "Total",
+            new Color(255, 180, 80)));
+        miniStats.add(miniStatCard(String.valueOf(stats[1]), "Done",
+            new Color(100, 220, 120)));
+        miniStats.add(miniStatCard(String.valueOf(stats[2]), "Pending",
+            new Color(255, 120, 80)));
+
+        statsPanel.add(miniStats);
+
+        JSeparator sep2 = new JSeparator();
+        sep2.setForeground(new Color(255, 255, 255, 30));
+        sep2.setMaximumSize(new Dimension(180, 1));
+
+        JLabel menuLbl = new JLabel("  MENU");
+        menuLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        menuLbl.setForeground(new Color(200, 160, 100));
+        menuLbl.setBorder(BorderFactory.createEmptyBorder(12, 16, 6, 0));
+        menuLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        sidebar.add(logoPanel);
+        sidebar.add(sep);
+        sidebar.add(profileRow);
+        sidebar.add(statsPanel);
+        sidebar.add(sep2);
+        sidebar.add(menuLbl);
+        sidebar.add(navItem("my_appointments.png",
+            "My Appointments",
+            () -> new Technician_AppointmentsDialog(this, technician)));
+        sidebar.add(navItem("update_status.png",
+            "Update Job Status",
+            () -> new Technician_UpdateStatusDialog(this, technician)));
+        sidebar.add(navItem("submit_feedback.png",
+            "Submit Feedback",
+            () -> new Technician_FeedbackDialog(this, technician)));
+        sidebar.add(navItem("job_details.png",
+            "View Job Details",
+            () -> new Technician_JobDetailsDialog(this, technician)));
+        sidebar.add(navItem("edit_profile.png",
+            "Edit My Profile",
+            () -> new Technician_EditProfileDialog(this, technician)));
+        sidebar.add(Box.createVerticalGlue());
+        sidebar.add(navItem("Sign_out.png", "Sign Out", this::signOut));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 16)));
+
+        return sidebar;
+    }
+
+    private JPanel miniStatCard(String value, String label, Color color) {
+        JPanel card = new JPanel();
+        card.setOpaque(false);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(255,255,255,30)),
+            BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        JLabel valLbl = new JLabel(value);
+        valLbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        valLbl.setForeground(color);
+        valLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel lblLbl = new JLabel(label);
+        lblLbl.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        lblLbl.setForeground(new Color(200, 170, 130));
+        lblLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.add(valLbl);
+        card.add(lblLbl);
+        return card;
+    }
+
+    private JPanel navItem(String iconFile, String label, Runnable action) {
+        final boolean[] hovered = {false};
+
+        JPanel item = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 10)) {
+            @Override protected void paintComponent(Graphics g) {
+                if (hovered[0]) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(255, 255, 255, 25));
+                    g2.fillRoundRect(4, 2, getWidth()-8, getHeight()-4, 8, 8);
+                    g2.dispose();
+                }
+                super.paintComponent(g);
+            }
+        };
+        item.setOpaque(false);
+        item.setMaximumSize(new Dimension(220, 46));
+        item.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        JLabel iconLbl = new JLabel(scaledIcon(iconFile, 20, 20));
+        iconLbl.setOpaque(false);
+        JLabel textLbl = new JLabel(label);
+        textLbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        textLbl.setForeground(new Color(255, 220, 170));
+        textLbl.setOpaque(false);
+
+        item.add(iconLbl);
+        item.add(textLbl);
+
+        item.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) {
+                hovered[0] = true;
+                textLbl.setForeground(Color.WHITE);
+                item.repaint();
+            }
+            @Override public void mouseExited(MouseEvent e) {
+                hovered[0] = false;
+                textLbl.setForeground(new Color(255, 220, 170));
+                item.repaint();
+            }
+            @Override public void mouseClicked(MouseEvent e) { action.run(); }
+        });
+
+        return item;
+    }
+
+    // ── Main content ──────────────────────────────────────────────────────────
+
+    private JPanel buildMain() {
+        JPanel main = new JPanel(new BorderLayout());
+        main.setBackground(new Color(255, 248, 240));
+
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(Color.WHITE);
+        topBar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 220, 200)),
+            BorderFactory.createEmptyBorder(14, 24, 14, 24)));
+
+        JLabel pageTitle = new JLabel("Technician Dashboard");
+        pageTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        pageTitle.setForeground(new Color(80, 40, 10));
+
+        JLabel welcome = new JLabel("Welcome back, " + technician.getName());
+        welcome.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        welcome.setForeground(new Color(140, 90, 40));
+
+        JPanel titlePanel = new JPanel();
+        titlePanel.setOpaque(false);
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.add(pageTitle);
+        titlePanel.add(welcome);
+
+        topBar.add(titlePanel, BorderLayout.WEST);
+        main.add(topBar, BorderLayout.NORTH);
+
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+
+        body.add(sectionLabel("My Performance", new Color(80, 40, 10)));
+        body.add(Box.createRigidArea(new Dimension(0, 12)));
+        body.add(buildStatsRow());
+        body.add(Box.createRigidArea(new Dimension(0, 28)));
+
+        body.add(sectionLabel("Quick Actions", new Color(80, 40, 10)));
+        body.add(Box.createRigidArea(new Dimension(0, 12)));
+        body.add(buildCardsGrid());
+
+        JScrollPane scroll = new JScrollPane(body);
+        scroll.setBorder(null);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
+        main.add(scroll, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setBackground(Color.WHITE);
+        footer.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(240, 220, 200)),
+            BorderFactory.createEmptyBorder(10, 24, 10, 24)));
+        JLabel footerLbl = new JLabel(
+            "APU Automotive Service Centre  •  Technician Module");
+        footerLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        footerLbl.setForeground(new Color(140, 90, 40));
+        JLabel idLbl = new JLabel("ID: " + technician.getUserid());
+        idLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        idLbl.setForeground(new Color(140, 90, 40));
+        footer.add(footerLbl, BorderLayout.WEST);
+        footer.add(idLbl,     BorderLayout.EAST);
+        main.add(footer, BorderLayout.SOUTH);
+
+        return main;
+    }
+
+    private JPanel buildStatsRow() {
+        int[] stats   = service.getMyStats(technician.getUserid());
+        double revenue = service.getTechnicianRevenue(technician.getUserid());
+
+        JPanel row = new JPanel(new GridLayout(1, 4, 16, 0));
+        row.setOpaque(false);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        row.add(statCard("Total Jobs",    String.valueOf(stats[0]),
+            "my_appointments.png", new Color(180, 100, 20)));
+        row.add(statCard("Completed",     String.valueOf(stats[1]),
+            "update_status.png",   new Color(34, 197, 94)));
+        row.add(statCard("Pending",       String.valueOf(stats[2]),
+            "job_details.png",     new Color(220, 80, 30)));
+        row.add(statCard("Revenue",
+            "RM "+String.format("%.2f", revenue),
+            "generate_receipt.png", new Color(80, 40, 10)));
+
+        return row;
+    }
+
+    private JPanel statCard(String label, String value,
+                             String iconFile, Color accent) {
+        JPanel card = new JPanel(new BorderLayout(12, 0));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 4, 0, 0, accent),
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(240, 220, 200)),
+                BorderFactory.createEmptyBorder(16, 16, 16, 16))));
+
+        JLabel iconLbl = new JLabel(scaledIcon(iconFile, 36, 36));
+        iconLbl.setVerticalAlignment(SwingConstants.CENTER);
+
+        JPanel info = new JPanel();
+        info.setOpaque(false);
+        info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+        JLabel valueLbl = new JLabel(value);
+        valueLbl.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        valueLbl.setForeground(accent);
+        JLabel labelLbl = new JLabel(label);
+        labelLbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        labelLbl.setForeground(new Color(140, 90, 40));
+        info.add(valueLbl);
+        info.add(labelLbl);
+
+        card.add(iconLbl, BorderLayout.WEST);
+        card.add(info,    BorderLayout.CENTER);
+        return card;
+    }
+
+    private JPanel buildCardsGrid() {
+        JPanel grid = new JPanel(new GridLayout(2, 3, 16, 16));
         grid.setOpaque(false);
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        grid.add(UITheme.dashboardCard("📅", "My Appointments",
+        grid.add(actionCard("my_appointments_card.png",
+            "My Appointments",
             "View all appointments\nassigned to you.",
-            e -> new Technician_AppointmentsDialog(this, technician)));
+            new Color(180, 100, 20),
+            () -> new Technician_AppointmentsDialog(this, technician)));
 
-        grid.add(UITheme.dashboardCard("🔧", "Update Job Status",
+        grid.add(actionCard("update_status_card.png",
+            "Update Job Status",
             "Mark appointments as\nIn Progress or Completed.",
-            e -> new Technician_UpdateStatusDialog(this, technician)));
+            new Color(34, 150, 80),
+            () -> new Technician_UpdateStatusDialog(this, technician)));
 
-        grid.add(UITheme.dashboardCard("✏", "Edit My Profile",
+        grid.add(actionCard("submit_feedback_card.png",
+            "Submit Feedback",
+            "Add notes on a\ncompleted job.",
+            new Color(100, 60, 180),
+            () -> new Technician_FeedbackDialog(this, technician)));
+
+        grid.add(actionCard("job_details_card.png",
+            "View Job Details",
+            "View detailed info\nfor a specific job.",
+            new Color(20, 120, 160),
+            () -> new Technician_JobDetailsDialog(this, technician)));
+
+        grid.add(actionCard("edit_profile_card.png",
+            "Edit My Profile",
             "Update your personal\ninformation and password.",
-            e -> new Technician_EditProfileDialog(this, technician)));
+            new Color(120, 40, 100),
+            () -> new Technician_EditProfileDialog(this, technician)));
 
-        wrapper.add(section, BorderLayout.NORTH);
-        wrapper.add(grid,    BorderLayout.CENTER);
-        return wrapper;
+        JPanel filler = new JPanel(); filler.setOpaque(false);
+        grid.add(filler);
+
+        return grid;
+    }
+
+    private JPanel actionCard(String iconFile, String title,
+                               String desc, Color accent, Runnable action) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(4, 0, 0, 0, accent),
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(240, 220, 200)),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20))));
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        JLabel iconLbl = new JLabel(scaledIcon(iconFile, 48, 48));
+        iconLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JLabel titleLbl = new JLabel(title);
+        titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        titleLbl.setForeground(new Color(80, 40, 10));
+
+        JLabel descLbl = new JLabel(
+            "<html><div style='width:150px;color:#8a5a28;font-size:11px;'>"
+            + desc.replace("\n", "<br>") + "</div></html>");
+
+        JPanel text = new JPanel();
+        text.setOpaque(false);
+        text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
+        text.add(titleLbl);
+        text.add(Box.createRigidArea(new Dimension(0, 6)));
+        text.add(descLbl);
+
+        card.add(iconLbl, BorderLayout.NORTH);
+        card.add(text,    BorderLayout.CENTER);
+
+        card.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) {
+                card.setBackground(new Color(255, 250, 240));
+                card.repaint();
+            }
+            @Override public void mouseExited(MouseEvent e) {
+                card.setBackground(Color.WHITE);
+                card.repaint();
+            }
+            @Override public void mouseClicked(MouseEvent e) { action.run(); }
+        });
+
+        return card;
+    }
+
+    private ImageIcon scaledIcon(String file, int w, int h) {
+        try {
+            ImageIcon raw = new ImageIcon(file);
+            return new ImageIcon(raw.getImage()
+                .getScaledInstance(w, h, Image.SCALE_SMOOTH));
+        } catch (Exception e) { return new ImageIcon(); }
+    }
+
+    private JLabel sectionLabel(String text, Color color) {
+        JLabel l = new JLabel(text);
+        l.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        l.setForeground(color);
+        l.setAlignmentX(Component.LEFT_ALIGNMENT);
+        l.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 220, 200)),
+            BorderFactory.createEmptyBorder(0, 0, 6, 0)));
+        l.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        return l;
     }
 
     private void signOut() {
         int c = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to sign out?", "Sign Out", JOptionPane.YES_NO_OPTION);
+            "Are you sure you want to sign out?",
+            "Sign Out", JOptionPane.YES_NO_OPTION);
         if (c == JOptionPane.YES_OPTION) { dispose(); new Login_Frame(); }
     }
 }
@@ -384,5 +770,224 @@ class Technician_EditProfileDialog {
     private void setStatus(String msg, boolean ok) {
         statusLabel.setForeground(ok ? UITheme.SUCCESS : UITheme.ERROR);
         statusLabel.setText(msg);
+    }
+    
+}
+// ══════════════════════════════════════════════════════════════════════════════
+//  Technician_FeedbackDialog
+// ══════════════════════════════════════════════════════════════════════════════
+
+class Technician_FeedbackDialog {
+
+    private final JFrame            parent;
+    private final Technician        technician;
+    private final TechnicianService service = new TechnicianService();
+
+    public Technician_FeedbackDialog(JFrame parent, Technician technician) {
+        this.parent = parent; this.technician = technician;
+        JDialog dialog = UITheme.createDialog(parent, "Submit Job Feedback", 540, 400);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(UITheme.dialogHeader("Submit Job Feedback"), BorderLayout.NORTH);
+        dialog.add(buildBody(dialog), BorderLayout.CENTER);
+        dialog.setVisible(true);
+    }
+
+    private JPanel buildBody(JDialog dialog) {
+        JPanel body = new JPanel(new GridBagLayout());
+        body.setBackground(UITheme.WHITE);
+        body.setBorder(BorderFactory.createEmptyBorder(24, 28, 10, 28));
+        GridBagConstraints g = new GridBagConstraints();
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.insets = new Insets(8, 0, 8, 0);
+        g.anchor = GridBagConstraints.WEST;
+
+        JLabel hint = UITheme.createLabel(
+            "Feedback can only be submitted for Completed appointments.",
+            UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
+
+        JTextField fApptId = UITheme.createTextField();
+        fApptId.setPreferredSize(new Dimension(400, UITheme.INPUT_H));
+        UITheme.placeholder(fApptId, "Enter Appointment ID...");
+
+        JTextArea fFeedback = new JTextArea(5, 30);
+        fFeedback.setFont(UITheme.FONT_REGULAR);
+        fFeedback.setLineWrap(true);
+        fFeedback.setWrapStyleWord(true);
+        fFeedback.setCaretColor(UITheme.ACCENT);
+        JScrollPane feedbackScroll = new JScrollPane(fFeedback);
+        feedbackScroll.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
+
+        JLabel status = UITheme.createLabel(" ",
+            UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
+
+        g.gridx=0; g.gridy=0; g.gridwidth=2;
+        body.add(hint, g);
+        g.gridy=1;
+        body.add(UITheme.createLabel("Appointment ID",
+            UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY), g);
+        g.gridy=2;
+        body.add(fApptId, g);
+        g.gridy=3;
+        body.add(UITheme.createLabel("Job Feedback / Notes",
+            UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY), g);
+        g.gridy=4;
+        body.add(feedbackScroll, g);
+        g.gridy=5;
+        body.add(status, g);
+
+        JButton submit = UITheme.createPrimaryButton("Submit Feedback");
+        JButton cancel = UITheme.createLinkButton("Cancel");
+        cancel.addActionListener(e -> dialog.dispose());
+        submit.addActionListener(e -> {
+            String apptId   = fApptId.getText().trim();
+            String feedback = fFeedback.getText().trim();
+            if (apptId.isEmpty() || feedback.isEmpty()) {
+                status.setForeground(UITheme.ERROR);
+                status.setText("Both fields are required.");
+                return;
+            }
+            OperationResult r = service.submitJobFeedback(
+                apptId, technician.getUserid(), feedback);
+            if (r.getResult()) {
+                JOptionPane.showMessageDialog(parent, r.getMessage(),
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+            } else {
+                status.setForeground(UITheme.ERROR);
+                status.setText(r.getMessage());
+            }
+        });
+
+        g.gridy=6;
+        body.add(UITheme.buttonRow(cancel, submit), g);
+        return body;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  Technician_JobDetailsDialog
+// ══════════════════════════════════════════════════════════════════════════════
+
+class Technician_JobDetailsDialog {
+
+    private final JFrame            parent;
+    private final Technician        technician;
+    private final TechnicianService service = new TechnicianService();
+
+    public Technician_JobDetailsDialog(JFrame parent, Technician technician) {
+        this.parent = parent; this.technician = technician;
+        JDialog dialog = UITheme.createDialog(parent, "View Job Details", 560, 500);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(UITheme.dialogHeader("View Job Details"), BorderLayout.NORTH);
+        dialog.add(buildBody(dialog), BorderLayout.CENTER);
+        dialog.setVisible(true);
+    }
+
+    private JPanel buildBody(JDialog dialog) {
+        JPanel outer = new JPanel(new BorderLayout());
+        outer.setBackground(UITheme.WHITE);
+        outer.setBorder(BorderFactory.createEmptyBorder(16, 24, 12, 24));
+
+        // Lookup row
+        JPanel lookupRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        lookupRow.setOpaque(false);
+        lookupRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        JTextField fApptId = UITheme.createTextField();
+        fApptId.setPreferredSize(new Dimension(200, UITheme.INPUT_H));
+        UITheme.placeholder(fApptId, "Appointment ID...");
+
+        JButton loadBtn = UITheme.createPrimaryButton("Load Details");
+        loadBtn.setPreferredSize(new Dimension(130, UITheme.INPUT_H));
+
+        lookupRow.add(UITheme.createLabel("Appointment ID:",
+            UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY));
+        lookupRow.add(fApptId);
+        lookupRow.add(loadBtn);
+
+        JLabel statusLabel = UITheme.createLabel(" ",
+            UITheme.FONT_SMALL, UITheme.ERROR);
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 0, 8, 0));
+
+        // Details card — hidden until loaded
+        JPanel detailCard = new JPanel(new GridBagLayout());
+        detailCard.setBackground(new Color(248, 249, 252));
+        detailCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(UITheme.BORDER),
+            BorderFactory.createEmptyBorder(16, 20, 16, 20)));
+        detailCard.setVisible(false);
+
+        loadBtn.addActionListener(e -> {
+            String apptId = fApptId.getText().trim();
+            if (apptId.isEmpty()) {
+                statusLabel.setText("Please enter an Appointment ID.");
+                return;
+            }
+            Appointment a = service.getJobDetails(apptId, technician.getUserid());
+            if (a == null) {
+                statusLabel.setText("Appointment not found or not assigned to you.");
+                detailCard.setVisible(false);
+                return;
+            }
+
+            statusLabel.setText(" ");
+            detailCard.removeAll();
+            GridBagConstraints g = new GridBagConstraints();
+            g.fill = GridBagConstraints.HORIZONTAL;
+            g.insets = new Insets(5, 0, 5, 20);
+            g.anchor = GridBagConstraints.WEST;
+
+            String customerName = service.getCustomerNameForAppointment(
+                a.getCustomerid());
+
+            String[][] fields = {
+                {"Appointment ID", a.getAppointmentid()},
+                {"Customer",       customerName + " (" + a.getCustomerid() + ")"},
+                {"Date",           a.getDate()},
+                {"Time",           a.getTime()},
+                {"Service Type",   a.getServicetype()},
+                {"Price",          "RM " + String.format("%.2f", a.getPrice())},
+                {"Vehicle",        a.getVehicleDetails()},
+                {"Status",         a.getStatus()},
+                {"Comments",       a.getComments() == null ? "—" : a.getComments()}
+            };
+
+            for (int i = 0; i < fields.length; i++) {
+                g.gridx=0; g.gridy=i; g.weightx=0;
+                detailCard.add(UITheme.createLabel(
+                    fields[i][0], UITheme.FONT_BOLD, UITheme.TEXT_SECONDARY), g);
+                g.gridx=1; g.weightx=1;
+                JLabel valLbl = UITheme.createLabel(
+                    fields[i][1], UITheme.FONT_REGULAR, UITheme.TEXT_PRIMARY);
+                if (fields[i][0].equals("Status")) {
+                    valLbl.setFont(UITheme.FONT_BOLD);
+                    valLbl.setForeground(switch (fields[i][1]) {
+                        case "Completed"   -> UITheme.SUCCESS;
+                        case "In Progress" -> new Color(37, 82, 148);
+                        case "Pending"     -> UITheme.WARNING;
+                        default            -> UITheme.TEXT_PRIMARY;
+                    });
+                }
+                detailCard.add(valLbl, g);
+            }
+
+            detailCard.setVisible(true);
+            detailCard.revalidate();
+            detailCard.repaint();
+        });
+
+        JPanel topSection = new JPanel();
+        topSection.setOpaque(false);
+        topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
+        topSection.add(lookupRow);
+        topSection.add(statusLabel);
+
+        JButton close = UITheme.createLinkButton("Close");
+        close.addActionListener(e -> dialog.dispose());
+
+        outer.add(topSection,               BorderLayout.NORTH);
+        outer.add(UITheme.formScrollPane(detailCard), BorderLayout.CENTER);
+        outer.add(UITheme.buttonRow(close), BorderLayout.SOUTH);
+        return outer;
     }
 }

@@ -4,7 +4,6 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Manager_Dialogs.java</file>
-            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Manager_ManageStaffDialog.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Manager.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/ManagerService.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CounterStaff.java</file>
@@ -14,8 +13,12 @@
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Technician_Frame_and_Dialogs.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Login_Frame.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/UITheme.java</file>
-            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Manager_Frame.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/DarkTheme.java</file>
+            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CustomerService.java</file>
+            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CS_Frame.java</file>
+            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Customer_Frame_and_Dialogs.java</file>
+            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Manager_Frame.java</file>
+            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CS_ManageAppointmentsDialog.java</file>
         </group>
     </open-files>
 </project-private>
