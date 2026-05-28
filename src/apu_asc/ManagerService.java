@@ -226,4 +226,126 @@ public double getTechnicianRevenue(String technicianId) {
             revenue += a.getPrice();
     return revenue;
 }
+// ── View All Payments ─────────────────────────────────────────────────────
+
+public ArrayList<Payment> getAllPayments() {
+    return FileHandler.getAllPayments();
+}
+
+public ArrayList<Payment> getPaymentsByMethod(String method) {
+    ArrayList<Payment> result = new ArrayList<>();
+    for (Payment p : FileHandler.getAllPayments()) {
+        if (method.equals("All") || p.getPaymentMethod().equals(method))
+            result.add(p);
+    }
+    return result;
+}
+
+public ArrayList<Payment> getPaymentsByDateRange(String fromDate, String toDate) {
+    ArrayList<Payment> result = new ArrayList<>();
+    try {
+        java.time.LocalDate from = java.time.LocalDate.parse(fromDate);
+        java.time.LocalDate to   = java.time.LocalDate.parse(toDate);
+        for (Payment p : FileHandler.getAllPayments()) {
+            java.time.LocalDate payDate =
+                java.time.LocalDate.parse(p.getPaymentDate());
+            if (!payDate.isBefore(from) && !payDate.isAfter(to))
+                result.add(p);
+        }
+    } catch (Exception e) {
+        System.out.println("Date parse error: " + e.getMessage());
+    }
+    return result;
+}
+
+public double getTotalRevenue() {
+    double total = 0;
+    for (Payment p : FileHandler.getAllPayments())
+        total += p.getAmount();
+    return total;
+}
+
+public double getRevenueByMethod(String method) {
+    double total = 0;
+    for (Payment p : FileHandler.getAllPayments())
+        if (p.getPaymentMethod().equals(method))
+            total += p.getAmount();
+    return total;
+}
+
+public int getPaymentCountByMethod(String method) {
+    int count = 0;
+    for (Payment p : FileHandler.getAllPayments())
+        if (p.getPaymentMethod().equals(method))
+            count++;
+    return count;
+}
+
+// ── System Statistics ─────────────────────────────────────────────────────
+
+public java.util.LinkedHashMap<String, Integer> getAppointmentsByMonth() {
+    java.util.LinkedHashMap<String, Integer> result = new java.util.LinkedHashMap<>();
+    String[] months = {"Jan","Feb","Mar","Apr","May","Jun",
+                       "Jul","Aug","Sep","Oct","Nov","Dec"};
+    for (String m : months) result.put(m, 0);
+
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        try {
+            int month = java.time.LocalDate.parse(a.getDate()).getMonthValue();
+            String key = months[month - 1];
+            result.put(key, result.get(key) + 1);
+        } catch (Exception e) {}
+    }
+    return result;
+}
+
+public java.util.LinkedHashMap<String, Double> getRevenueByMonth() {
+    java.util.LinkedHashMap<String, Double> result = new java.util.LinkedHashMap<>();
+    String[] months = {"Jan","Feb","Mar","Apr","May","Jun",
+                       "Jul","Aug","Sep","Oct","Nov","Dec"};
+    for (String m : months) result.put(m, 0.0);
+
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        if (!a.getStatus().equals("Completed")) continue;
+        try {
+            int month = java.time.LocalDate.parse(a.getDate()).getMonthValue();
+            String key = months[month - 1];
+            result.put(key, result.get(key) + a.getPrice());
+        } catch (Exception e) {}
+    }
+    return result;
+}
+
+public java.util.LinkedHashMap<String, Integer> getAppointmentsByDayOfWeek() {
+    java.util.LinkedHashMap<String, Integer> result = new java.util.LinkedHashMap<>();
+    String[] days = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
+    for (String d : days) result.put(d, 0);
+
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        try {
+            java.time.DayOfWeek dow =
+                java.time.LocalDate.parse(a.getDate()).getDayOfWeek();
+            String key = days[dow.getValue() - 1];
+            result.put(key, result.get(key) + 1);
+        } catch (Exception e) {}
+    }
+    return result;
+}
+
+public java.util.LinkedHashMap<String, Integer> getTopTechnicians() {
+    java.util.LinkedHashMap<String, Integer> result = new java.util.LinkedHashMap<>();
+    for (Appointment a : FileHandler.getAllAppointments()) {
+        if (!a.getStatus().equals("Completed")) continue;
+        String id = a.getTechnicianid();
+        result.put(id, result.getOrDefault(id, 0) + 1);
+    }
+    return result;
+}
+
+public String getTechnicianName(String technicianId) {
+    for (User u : FileHandler.getallusers())
+        if (u.getUserid().equals(technicianId))
+            return u.getName();
+    return technicianId;
+}
 }

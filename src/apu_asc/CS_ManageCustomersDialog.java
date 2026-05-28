@@ -60,7 +60,7 @@ public class CS_ManageCustomersDialog {
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
-        p.add(topBar,                         BorderLayout.NORTH);
+        p.add(topBar,                          BorderLayout.NORTH);
         p.add(UITheme.createScrollPane(table), BorderLayout.CENTER);
         return p;
     }
@@ -78,11 +78,12 @@ public class CS_ManageCustomersDialog {
         deleteBtn.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row < 0) { noSel(); return; }
-            String id = (String) model.getValueAt(row, 0);
+            String id   = (String) model.getValueAt(row, 0);
             String name = (String) model.getValueAt(row, 1);
             if (JOptionPane.showConfirmDialog(dialog,
                     "Delete customer \"" + name + "\"?", "Confirm",
-                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
                 OperationResult r = service.deleteCustomer(id);
                 toast(r); if (r.getResult()) loadData();
             }
@@ -119,33 +120,45 @@ public class CS_ManageCustomersDialog {
         form.setBorder(BorderFactory.createEmptyBorder(20, 28, 10, 28));
         GridBagConstraints g = UITheme.formGbc();
 
-        JTextField     fName = tf(), fAge = tf(), fEmail = tf(), fUsername = tf(), fContact = tf();
-        JPasswordField fPass = pf();
+        JTextField     fName     = tf();
+        JTextField     fAge      = tf();
+        JTextField     fEmail    = tf();
+        JTextField     fUsername = tf();
+        JTextField     fContact  = tf();
+        JPasswordField fPass     = pf();
 
-        UITheme.formRow(form, g, 0, "Full Name",  fName);
-        UITheme.formRow(form, g, 1, "Age",        fAge);
-        UITheme.formRow(form, g, 2, "Email",      fEmail);
-        UITheme.formRow(form, g, 3, "Username",   fUsername);
-        UITheme.formRow(form, g, 4, "Password",   fPass);
-        UITheme.formRow(form, g, 5, "Contact",    fContact);
+        UITheme.formRow(form, g, 0, "Full Name", fName);
+        UITheme.formRow(form, g, 1, "Age",       fAge);
+        UITheme.formRow(form, g, 2, "Email",     fEmail);
+        UITheme.formRow(form, g, 3, "Username",  fUsername);
+        UITheme.formRow(form, g, 4, "Password",  fPass);
+        UITheme.formRow(form, g, 5, "Contact",   fContact);
 
         JLabel status = UITheme.createLabel(" ", UITheme.FONT_SMALL, UITheme.ERROR);
         g.gridx=0; g.gridy=12; g.gridwidth=2; form.add(status, g);
 
-        JButton save = UITheme.createPrimaryButton("Save");
+        JButton save   = UITheme.createPrimaryButton("Save");
         JButton cancel = UITheme.createOutlineButton("Cancel");
         cancel.addActionListener(e -> d.dispose());
+
         save.addActionListener(e -> {
-            if (fName.getText().isBlank()||fAge.getText().isBlank()||fEmail.getText().isBlank()
-                ||fUsername.getText().isBlank()||fContact.getText().isBlank()) {
-                status.setText("All fields are required."); return;
-            }
-            int age; try { age = Integer.parseInt(fAge.getText().trim()); }
-            catch (NumberFormatException ex) { status.setText("Age must be a number."); return; }
-            OperationResult r = service.createCustomer(fName.getText().trim(), age,
+            String error = Validator.validateAll(
+                Validator.validateName(fName.getText()),
+                Validator.validateAge(fAge.getText()),
+                Validator.validateEmail(fEmail.getText()),
+                Validator.validateUsername(fUsername.getText()),
+                Validator.validatePassword(new String(fPass.getPassword())),
+                Validator.validateContact(fContact.getText())
+            );
+            if (error != null) { status.setText(error); return; }
+
+            int age = Integer.parseInt(fAge.getText().trim());
+            OperationResult r = service.createCustomer(
+                fName.getText().trim(), age,
                 fEmail.getText().trim(), fUsername.getText().trim(),
                 new String(fPass.getPassword()), fContact.getText().trim());
-            toast(r); if (r.getResult()) { d.dispose(); loadData(); }
+            toast(r);
+            if (r.getResult()) { d.dispose(); loadData(); }
             else status.setText(r.getMessage());
         });
 
@@ -167,29 +180,42 @@ public class CS_ManageCustomersDialog {
         form.setBorder(BorderFactory.createEmptyBorder(20, 28, 10, 28));
         GridBagConstraints g = UITheme.formGbc();
 
-        JTextField fName = tf(c.getName()), fAge = tf(String.valueOf(c.getAge())),
-                   fEmail = tf(c.getEmail()), fContact = tf(c.getContact());
-        JTextField fUser = tf(c.getUsername());
-        fUser.setEditable(false); fUser.setBackground(new Color(245,245,248));
+        JTextField fName    = tf(c.getName());
+        JTextField fAge     = tf(String.valueOf(c.getAge()));
+        JTextField fEmail   = tf(c.getEmail());
+        JTextField fContact = tf(c.getContact());
+        JTextField fUser    = tf(c.getUsername());
+        fUser.setEditable(false);
+        fUser.setBackground(new Color(245, 245, 248));
 
-        UITheme.formRow(form, g, 0, "Full Name",        fName);
-        UITheme.formRow(form, g, 1, "Age",              fAge);
-        UITheme.formRow(form, g, 2, "Email",            fEmail);
-        UITheme.formRow(form, g, 3, "Contact",          fContact);
+        UITheme.formRow(form, g, 0, "Full Name",         fName);
+        UITheme.formRow(form, g, 1, "Age",               fAge);
+        UITheme.formRow(form, g, 2, "Email",             fEmail);
+        UITheme.formRow(form, g, 3, "Contact",           fContact);
         UITheme.formRow(form, g, 4, "Username (locked)", fUser);
 
         JLabel status = UITheme.createLabel(" ", UITheme.FONT_SMALL, UITheme.ERROR);
         g.gridx=0; g.gridy=10; g.gridwidth=2; form.add(status, g);
 
-        JButton save = UITheme.createPrimaryButton("Save Changes");
+        JButton save   = UITheme.createPrimaryButton("Save Changes");
         JButton cancel = UITheme.createOutlineButton("Cancel");
         cancel.addActionListener(e -> d.dispose());
+
         save.addActionListener(e -> {
-            int age; try { age = Integer.parseInt(fAge.getText().trim()); }
-            catch (NumberFormatException ex) { status.setText("Age must be a number."); return; }
-            OperationResult r = service.updateCustomer(id, fName.getText().trim(), age,
+            String error = Validator.validateAll(
+                Validator.validateName(fName.getText()),
+                Validator.validateAge(fAge.getText()),
+                Validator.validateEmail(fEmail.getText()),
+                Validator.validateContact(fContact.getText())
+            );
+            if (error != null) { status.setText(error); return; }
+
+            int age = Integer.parseInt(fAge.getText().trim());
+            OperationResult r = service.updateCustomer(id,
+                fName.getText().trim(), age,
                 fEmail.getText().trim(), fContact.getText().trim());
-            toast(r); if (r.getResult()) { d.dispose(); loadData(); }
+            toast(r);
+            if (r.getResult()) { d.dispose(); loadData(); }
             else status.setText(r.getMessage());
         });
 
@@ -198,28 +224,35 @@ public class CS_ManageCustomersDialog {
         d.setVisible(true);
     }
 
-    private JTextField tf()          { return styled(new JTextField()); }
-    private JTextField tf(String v)  { JTextField f = tf(); f.setText(v); return f; }
-    private JPasswordField pf()      { return (JPasswordField) styled(new JPasswordField()); }
+    private JTextField tf()         { return styled(new JTextField()); }
+    private JTextField tf(String v) { JTextField f = tf(); f.setText(v); return f; }
+    private JPasswordField pf()     { return (JPasswordField) styled(new JPasswordField()); }
 
     private JTextField styled(JTextField f) {
-        f.setFont(UITheme.FONT_REGULAR); f.setForeground(UITheme.TEXT_PRIMARY);
-        f.setBackground(UITheme.WHITE); f.setCaretColor(UITheme.ACCENT);
+        f.setFont(UITheme.FONT_REGULAR);
+        f.setForeground(UITheme.TEXT_PRIMARY);
+        f.setBackground(UITheme.WHITE);
+        f.setCaretColor(UITheme.ACCENT);
         UITheme.setInputBorder(f, UITheme.BORDER);
         f.addFocusListener(new FocusAdapter() {
-            @Override public void focusGained(FocusEvent e) { UITheme.setInputBorder(f, UITheme.BORDER_FOCUS); }
-            @Override public void focusLost(FocusEvent e)   { UITheme.setInputBorder(f, UITheme.BORDER); }
+            @Override public void focusGained(FocusEvent e) {
+                UITheme.setInputBorder(f, UITheme.BORDER_FOCUS); }
+            @Override public void focusLost(FocusEvent e) {
+                UITheme.setInputBorder(f, UITheme.BORDER); }
         });
         return f;
     }
 
     private void noSel() {
-        JOptionPane.showMessageDialog(parent, "Select a customer from the table first.",
+        JOptionPane.showMessageDialog(parent,
+            "Select a customer from the table first.",
             "No Selection", JOptionPane.INFORMATION_MESSAGE);
     }
+
     private void toast(OperationResult r) {
         JOptionPane.showMessageDialog(parent, r.getMessage(),
             r.getResult() ? "Success" : "Error",
-            r.getResult() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+            r.getResult() ? JOptionPane.INFORMATION_MESSAGE
+                          : JOptionPane.ERROR_MESSAGE);
     }
 }

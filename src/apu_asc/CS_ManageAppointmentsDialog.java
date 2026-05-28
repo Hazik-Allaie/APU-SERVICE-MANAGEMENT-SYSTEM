@@ -104,27 +104,34 @@ public class CS_ManageAppointmentsDialog {
     }
 
     private void handleConfirm(JDialog dialog) {
-        String cid     = fCustomerId.getText().trim();
-        String date    = clean(fDate, "YYYY-MM-DD");
-        String time    = clean(fTime, "HH:MM");
-        String stype   = (String) fServiceType.getSelectedItem();
-        String vehicle = clean(fVehicle, "");
-        String comments = clean(fComments, "Optional");
+    String cid      = fCustomerId.getText().trim();
+    String date     = clean(fDate, "YYYY-MM-DD");
+    String time     = clean(fTime, "HH:MM");
+    String stype    = (String) fServiceType.getSelectedItem();
+    String vehicle  = clean(fVehicle, "");
+    String comments = clean(fComments, "Optional");
 
-        if (cid.isEmpty()||date.isEmpty()||time.isEmpty()||vehicle.isEmpty()) {
-            setStatus("Customer ID, date, time and vehicle are required.", false); return;
-        }
-        if (availableTechs.isEmpty()||!fTechnician.isEnabled()) {
-            setStatus("Check availability and select a technician first.", false); return;
-        }
-        String techId = availableTechs.get(fTechnician.getSelectedIndex()).getUserid();
-        OperationResult r = service.createAppointment(cid, techId, date, time,
-            stype, vehicle, comments, loggedInUser);
-        if (r.getResult()) {
-            JOptionPane.showMessageDialog(parent, r.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
-            dialog.dispose();
-        } else setStatus(r.getMessage(), false);
+    String error = Validator.validateAll(
+        Validator.validateCustomerId(cid),
+        Validator.validateDate(date),
+        Validator.validateTime(time),
+        Validator.validateVehicle(vehicle)
+    );
+    if (error != null) { setStatus(error, false); return; }
+
+    if (availableTechs.isEmpty() || !fTechnician.isEnabled()) {
+        setStatus("Check availability and select a technician first.", false);
+        return;
     }
+    String techId = availableTechs.get(fTechnician.getSelectedIndex()).getUserid();
+    OperationResult r = service.createAppointment(cid, techId, date, time,
+        stype, vehicle, comments, loggedInUser);
+    if (r.getResult()) {
+        JOptionPane.showMessageDialog(parent, r.getMessage(),
+            "Success", JOptionPane.INFORMATION_MESSAGE);
+        dialog.dispose();
+    } else setStatus(r.getMessage(), false);
+}
 
     private void pair(JPanel p, GridBagConstraints g, int row,
                       String l1, JComponent c1, String l2, JComponent c2) {

@@ -16,7 +16,7 @@ public class Manager_Frame extends JFrame {
     public Manager_Frame(Manager manager) {
         this.manager = manager;
         setTitle("Manager Dashboard - APU-ASC");
-        setSize(1100, 660);
+        setSize(1100, 760);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -113,7 +113,11 @@ public class Manager_Frame extends JFrame {
         sidebar.add(navItem("view_report.png",           "View Reports",            () -> new Manager_ViewReportsDialog(this)));
         sidebar.add(navItem("all_appointments.png",      "All Appointments",        () -> new Manager_ViewAllAppointmentsDialog(this)));
         sidebar.add(navItem("technician_performance.png","Technician Performance",  () -> new Manager_TechnicianPerformanceDialog(this)));
+        sidebar.add(navItem("view_payments.png",         "View All Payments",       () -> new Manager_ViewAllPaymentsDialog(this)));
+        sidebar.add(navItem("statistics.png",            "System Statistics",       () -> new Manager_StatisticsDialog(this)));
         sidebar.add(Box.createVerticalGlue());
+
+
 
         // Sign out at bottom
         sidebar.add(navItem("Sign_out.png", "Sign Out", this::signOut));
@@ -302,7 +306,7 @@ private JPanel navItem(String iconFile, String label, Runnable action) {
     // ── Quick action cards ────────────────────────────────────────────────────
 
     private JPanel buildCardsRow() {
-        JPanel grid = new JPanel(new GridLayout(2, 3, 16, 16));
+       JPanel grid = new JPanel(new GridLayout(3, 3, 16, 16));;
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -329,6 +333,20 @@ private JPanel navItem(String iconFile, String label, Runnable action) {
         grid.add(actionCard("technician_performance_card.png","Technician Performance",
             "View technician stats\nand appointment breakdown.",
             new Color(180, 50, 100),  () -> new Manager_TechnicianPerformanceDialog(this)));
+        grid.add(actionCard("view_payments_card.png",
+            "View All Payments",
+    "See all payments and\nrevenue breakdown.",
+    new Color(16, 120, 80),() -> new Manager_ViewAllPaymentsDialog(this)));
+
+       grid.add(actionCard("statistics_card.png",
+    "System Statistics",
+    "Charts and trends for\nappointments and revenue.",
+    new Color(139, 60, 200),
+    () -> new Manager_StatisticsDialog(this)));
+
+// filler
+JPanel filler = new JPanel(); filler.setOpaque(false);
+grid.add(filler);
 
         return grid;
     }

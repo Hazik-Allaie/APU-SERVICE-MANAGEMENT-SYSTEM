@@ -64,20 +64,27 @@ class Manager_SetPricesDialog {
         JButton cancel = DarkTheme.linkButton("Cancel");
         cancel.addActionListener(e -> dialog.dispose());
         save.addActionListener(e -> {
-            double normal, major;
-            try {
-                normal = Double.parseDouble(fNormal.getText().trim());
-                major  = Double.parseDouble(fMajor.getText().trim());
-            } catch (NumberFormatException ex) {
-                status.setText("Please enter valid numeric values."); return;
-            }
-            OperationResult r = service.savePrices(normal, major);
-            if (r.getResult()) {
-                JOptionPane.showMessageDialog(dialog, r.getMessage(), "Saved",
-                    JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-            } else status.setText(r.getMessage());
-        });
+    String error = Validator.validateAll(
+        Validator.validatePrice(fNormal.getText()),
+        Validator.validatePrice(fMajor.getText())
+    );
+    if (error != null) {
+        status.setForeground(UITheme.ERROR);
+        status.setText(error);
+        return;
+    }
+    double normal = Double.parseDouble(fNormal.getText().trim());
+    double major  = Double.parseDouble(fMajor.getText().trim());
+    OperationResult r = service.savePrices(normal, major);
+    if (r.getResult()) {
+        JOptionPane.showMessageDialog(dialog, r.getMessage(),
+            "Saved", JOptionPane.INFORMATION_MESSAGE);
+        dialog.dispose();
+    } else {
+        status.setForeground(UITheme.ERROR);
+        status.setText(r.getMessage());
+    }
+});
 
         outer.add(form, BorderLayout.CENTER);
         outer.add(DarkTheme.buttonRow(cancel, save), BorderLayout.SOUTH);
@@ -781,22 +788,27 @@ class Manager_ManageStaffDialog {
         JButton cancel = DarkTheme.outlineButton("Cancel");
         cancel.addActionListener(e -> d.dispose());
         save.addActionListener(e -> {
-            if (fId.getText().isBlank()||fName.getText().isBlank()||
-                fAge.getText().isBlank()||fEmail.getText().isBlank()||
-                fUsername.getText().isBlank()||fContact.getText().isBlank()) {
-                status.setText("All fields are required."); return;
-            }
-            int age; try { age = Integer.parseInt(fAge.getText().trim()); }
-            catch (NumberFormatException ex) { status.setText("Age must be a number."); return; }
-            OperationResult r = service.addStaff(
-                (String) fRole.getSelectedItem(),
-                fId.getText().trim(), fName.getText().trim(), age,
-                fEmail.getText().trim(), fUsername.getText().trim(),
-                new String(fPass.getPassword()), fContact.getText().trim());
-            toast(r);
-            if (r.getResult()) { d.dispose(); loadData(activeRole); }
-            else status.setText(r.getMessage());
-        });
+    String error = Validator.validateAll(
+        Validator.validateStaffId(fId.getText()),
+        Validator.validateName(fName.getText()),
+        Validator.validateAge(fAge.getText()),
+        Validator.validateEmail(fEmail.getText()),
+        Validator.validateUsername(fUsername.getText()),
+        Validator.validatePassword(new String(fPass.getPassword())),
+        Validator.validateContact(fContact.getText())
+    );
+    if (error != null) { status.setText(error); return; }
+
+    int age = Integer.parseInt(fAge.getText().trim());
+    OperationResult r = service.addStaff(
+        (String) fRole.getSelectedItem(),
+        fId.getText().trim(), fName.getText().trim(), age,
+        fEmail.getText().trim(), fUsername.getText().trim(),
+        new String(fPass.getPassword()), fContact.getText().trim());
+    toast(r);
+    if (r.getResult()) { d.dispose(); loadData(activeRole); }
+    else status.setText(r.getMessage());
+});
 
         JScrollPane scroll = new JScrollPane(form);
         scroll.setBorder(null);
@@ -847,18 +859,28 @@ class Manager_ManageStaffDialog {
         JButton save   = DarkTheme.primaryButton("Save Changes");
         JButton cancel = DarkTheme.outlineButton("Cancel");
         cancel.addActionListener(e -> d.dispose());
-        save.addActionListener(e -> {
-            int age; try { age = Integer.parseInt(fAge.getText().trim()); }
-            catch (NumberFormatException ex) { status.setText("Age must be a number."); return; }
-            String np = new String(fPass.getPassword());
-            if (np.isEmpty()) np = u.getPassword();
-            OperationResult r = service.updateStaff(staffId,
-                fName.getText().trim(), age, fEmail.getText().trim(),
-                fUsername.getText().trim(), np, fContact.getText().trim());
-            toast(r);
-            if (r.getResult()) { d.dispose(); loadData(activeRole); }
-            else status.setText(r.getMessage());
-        });
+       save.addActionListener(e -> {
+    String np = new String(fPass.getPassword());
+    if (np.isEmpty()) np = u.getPassword();
+
+    String error = Validator.validateAll(
+        Validator.validateName(fName.getText()),
+        Validator.validateAge(fAge.getText()),
+        Validator.validateEmail(fEmail.getText()),
+        Validator.validateUsername(fUsername.getText()),
+        Validator.validateContact(fContact.getText()),
+        np.equals(u.getPassword()) ? null : Validator.validatePassword(np)
+    );
+    if (error != null) { status.setText(error); return; }
+
+    int age = Integer.parseInt(fAge.getText().trim());
+    OperationResult r = service.updateStaff(staffId,
+        fName.getText().trim(), age, fEmail.getText().trim(),
+        fUsername.getText().trim(), np, fContact.getText().trim());
+    toast(r);
+    if (r.getResult()) { d.dispose(); loadData(activeRole); }
+    else status.setText(r.getMessage());
+});
 
         JScrollPane scroll = new JScrollPane(form);
         scroll.setBorder(null);
@@ -963,5 +985,549 @@ class Manager_ManageStaffDialog {
         JOptionPane.showMessageDialog(parent, r.getMessage(),
             r.getResult() ? "Success" : "Error",
             r.getResult() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
+    }
+}
+// ══════════════════════════════════════════════════════════════════════════════
+//  Manager_ViewAllPaymentsDialog
+// ══════════════════════════════════════════════════════════════════════════════
+
+class Manager_ViewAllPaymentsDialog {
+
+    private final ManagerService  service = new ManagerService();
+    private DefaultTableModel     model;
+    private JLabel                totalRevLbl, cashLbl, cardLbl, onlineLbl;
+
+    public Manager_ViewAllPaymentsDialog(JFrame parent) {
+        JDialog dialog = DarkTheme.createDialog(parent, "All Payments", 980, 620);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(DarkTheme.dialogHeader("All Payments", "view_payments.png"),
+            BorderLayout.NORTH);
+        dialog.add(buildCenter(),        BorderLayout.CENTER);
+        dialog.add(buildButtons(dialog), BorderLayout.SOUTH);
+        loadData("All");
+        dialog.setVisible(true);
+    }
+
+    private JPanel buildCenter() {
+        JPanel outer = DarkTheme.darkPanel();
+        outer.setLayout(new BorderLayout());
+        outer.setBorder(BorderFactory.createEmptyBorder(16, 24, 12, 24));
+
+        // Stats row
+        JPanel statsRow = new JPanel(new GridLayout(1, 4, 12, 0));
+        statsRow.setOpaque(false);
+        statsRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
+
+        totalRevLbl = DarkTheme.label(
+            "RM " + String.format("%.2f", service.getTotalRevenue()),
+            new Font("Segoe UI", Font.BOLD, 16), DarkTheme.SUCCESS);
+        cashLbl = DarkTheme.label(
+            "RM " + String.format("%.2f", service.getRevenueByMethod("Cash")),
+            new Font("Segoe UI", Font.BOLD, 16), new Color(96, 165, 250));
+        cardLbl = DarkTheme.label(
+            "RM " + String.format("%.2f", service.getRevenueByMethod("Card")),
+            new Font("Segoe UI", Font.BOLD, 16), DarkTheme.WARNING);
+        onlineLbl = DarkTheme.label(
+            "RM " + String.format("%.2f", service.getRevenueByMethod("Online")),
+            new Font("Segoe UI", Font.BOLD, 16), DarkTheme.PURPLE);
+
+        statsRow.add(summaryCard("Total Revenue",
+            totalRevLbl, DarkTheme.SUCCESS));
+        statsRow.add(summaryCard("Cash ("
+            + service.getPaymentCountByMethod("Cash") + ")",
+            cashLbl, new Color(96, 165, 250)));
+        statsRow.add(summaryCard("Card ("
+            + service.getPaymentCountByMethod("Card") + ")",
+            cardLbl, DarkTheme.WARNING));
+        statsRow.add(summaryCard("Online ("
+            + service.getPaymentCountByMethod("Online") + ")",
+            onlineLbl, DarkTheme.PURPLE));
+
+        // Filter row
+        JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        filterRow.setOpaque(false);
+        filterRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+        filterRow.add(DarkTheme.label("Method:",
+            DarkTheme.FONT_BOLD, DarkTheme.TEXT_MUTED));
+        JComboBox<String> methodFilter = DarkTheme.darkCombo(
+            new String[]{"All", "Cash", "Card", "Online"});
+        methodFilter.setPreferredSize(new Dimension(130, 34));
+        filterRow.add(methodFilter);
+
+        filterRow.add(DarkTheme.label("  From:",
+            DarkTheme.FONT_BOLD, DarkTheme.TEXT_MUTED));
+        JTextField fromField = darkField();
+        fromField.setPreferredSize(new Dimension(120, 34));
+        UITheme.placeholder(fromField, "YYYY-MM-DD");
+        filterRow.add(fromField);
+
+        filterRow.add(DarkTheme.label("To:",
+            DarkTheme.FONT_BOLD, DarkTheme.TEXT_MUTED));
+        JTextField toField = darkField();
+        toField.setPreferredSize(new Dimension(120, 34));
+        UITheme.placeholder(toField, "YYYY-MM-DD");
+        filterRow.add(toField);
+
+        JButton filterBtn = DarkTheme.primaryButton("Filter");
+        filterBtn.setPreferredSize(new Dimension(90, 34));
+        JButton resetBtn  = DarkTheme.outlineButton("Reset");
+        resetBtn.setPreferredSize(new Dimension(90, 34));
+        filterRow.add(filterBtn);
+        filterRow.add(resetBtn);
+
+        JLabel countLabel = DarkTheme.label("",
+            DarkTheme.FONT_SMALL, DarkTheme.TEXT_MUTED);
+        filterRow.add(Box.createRigidArea(new Dimension(12, 0)));
+        filterRow.add(countLabel);
+
+        // Table
+        String[] cols = {"Payment ID", "Appointment ID", "Customer ID",
+                         "Service Type", "Amount (RM)", "Date",
+                         "Method", "Status"};
+        model = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        JTable table = new JTable(model);
+        DarkTheme.styleTable(table);
+
+        int[] widths = {100, 120, 100, 110, 100, 100, 90, 80};
+        for (int i = 0; i < widths.length; i++)
+            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+
+        // Amount colour renderer
+        table.getColumnModel().getColumn(4).setCellRenderer(
+            new DefaultTableCellRenderer() {
+                @Override public Component getTableCellRendererComponent(
+                        JTable t, Object v, boolean sel, boolean f,
+                        int row, int col) {
+                    JPanel cell = new JPanel(new BorderLayout());
+                    cell.setOpaque(false);
+                    JLabel lbl = DarkTheme.label("RM " + v,
+                        new Font("Segoe UI", Font.BOLD, 13),
+                        DarkTheme.SUCCESS);
+                    lbl.setBorder(BorderFactory.createEmptyBorder(0, 14, 0, 14));
+                    cell.add(lbl, BorderLayout.CENTER);
+                    return cell;
+                }
+            });
+
+        // Method badge renderer
+        table.getColumnModel().getColumn(6).setCellRenderer(
+            new DefaultTableCellRenderer() {
+                @Override public Component getTableCellRendererComponent(
+                        JTable t, Object v, boolean sel, boolean f,
+                        int row, int col) {
+                    JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+                    p.setOpaque(false);
+                    String s = v == null ? "" : v.toString();
+                    Color c = switch (s) {
+                        case "Cash"   -> new Color(96, 165, 250);
+                        case "Card"   -> DarkTheme.WARNING;
+                        case "Online" -> DarkTheme.PURPLE;
+                        default       -> DarkTheme.TEXT_MUTED;
+                    };
+                    p.add(DarkTheme.badge(s, c, c));
+                    return p;
+                }
+            });
+
+        model.addTableModelListener(e ->
+            countLabel.setText("Showing " + model.getRowCount() + " payment(s)"));
+
+        filterBtn.addActionListener(e -> {
+            String method = (String) methodFilter.getSelectedItem();
+            String from   = fromField.getText().trim();
+            String to     = toField.getText().trim();
+
+            java.util.ArrayList<Payment> results;
+
+            if (!from.isEmpty() && !to.isEmpty()
+                    && !from.equals("YYYY-MM-DD")
+                    && !to.equals("YYYY-MM-DD")) {
+                results = service.getPaymentsByDateRange(from, to);
+                if (!method.equals("All"))
+                    results.removeIf(p ->
+                        !p.getPaymentMethod().equals(method));
+            } else {
+                results = service.getPaymentsByMethod(method);
+            }
+            populateTable(results);
+        });
+
+        resetBtn.addActionListener(e -> {
+            methodFilter.setSelectedIndex(0);
+            fromField.setText("");
+            toField.setText("");
+            loadData("All");
+        });
+
+        JPanel topSection = new JPanel(new BorderLayout());
+        topSection.setOpaque(false);
+        topSection.add(statsRow,  BorderLayout.NORTH);
+        topSection.add(filterRow, BorderLayout.SOUTH);
+
+        outer.add(topSection,                      BorderLayout.NORTH);
+        outer.add(DarkTheme.darkScrollPane(table), BorderLayout.CENTER);
+        return outer;
+    }
+
+    private void loadData(String method) {
+        populateTable(service.getPaymentsByMethod(method));
+    }
+
+    private void populateTable(java.util.ArrayList<Payment> payments) {
+        model.setRowCount(0);
+        for (Payment p : payments)
+            model.addRow(new Object[]{
+                p.getPaymentId(), p.getAppointmentId(), p.getCustomerId(),
+                p.getServiceType(),
+                String.format("%.2f", p.getAmount()),
+                p.getPaymentDate(), p.getPaymentMethod(), p.getStatus()
+            });
+    }
+
+    private JPanel summaryCard(String label, JLabel valueLabel, Color accent) {
+        JPanel card = DarkTheme.glassCard();
+        card.setLayout(new BorderLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 3, 0, 0, accent),
+            BorderFactory.createEmptyBorder(12, 14, 12, 14)));
+        card.add(valueLabel,
+            BorderLayout.CENTER);
+        card.add(DarkTheme.label(label,
+            DarkTheme.FONT_SMALL, DarkTheme.TEXT_MUTED), BorderLayout.SOUTH);
+        return card;
+    }
+
+    private JTextField darkField() {
+        JTextField f = new JTextField();
+        f.setFont(DarkTheme.FONT_REGULAR);
+        f.setForeground(DarkTheme.TEXT_WHITE);
+        f.setBackground(new Color(20, 35, 100));
+        f.setCaretColor(Color.WHITE);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(DarkTheme.GLASS_BORDER),
+            BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+        return f;
+    }
+
+    private JPanel buildButtons(JDialog dialog) {
+        JButton close = DarkTheme.linkButton("Close");
+        close.addActionListener(e -> dialog.dispose());
+        return DarkTheme.buttonRow(close);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  Manager_StatisticsDialog
+// ══════════════════════════════════════════════════════════════════════════════
+
+class Manager_StatisticsDialog {
+
+    private final ManagerService service = new ManagerService();
+
+    public Manager_StatisticsDialog(JFrame parent) {
+        JDialog dialog = DarkTheme.createDialog(parent, "System Statistics", 980, 660);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(DarkTheme.dialogHeader("System Statistics", "statistics.png"),
+            BorderLayout.NORTH);
+        dialog.add(buildBody(), BorderLayout.CENTER);
+        JButton close = DarkTheme.linkButton("Close");
+        close.addActionListener(e -> dialog.dispose());
+        dialog.add(DarkTheme.buttonRow(close), BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
+    private JScrollPane buildBody() {
+        JPanel body = DarkTheme.darkPanel();
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBorder(BorderFactory.createEmptyBorder(20, 28, 20, 28));
+
+        // ── Row 1: Appointments by Month chart ────────────────────────────
+        body.add(DarkTheme.sectionLabel("Appointments by Month"));
+        body.add(Box.createRigidArea(new Dimension(0, 12)));
+        body.add(buildBarChart(
+            service.getAppointmentsByMonth(),
+            new Color(96, 165, 250), "Appointments"));
+        body.add(Box.createRigidArea(new Dimension(0, 24)));
+
+        // ── Row 2: Revenue by Month chart ─────────────────────────────────
+        body.add(DarkTheme.sectionLabel("Revenue by Month (RM)"));
+        body.add(Box.createRigidArea(new Dimension(0, 12)));
+        body.add(buildRevenueChart(service.getRevenueByMonth()));
+        body.add(Box.createRigidArea(new Dimension(0, 24)));
+
+        // ── Row 3: Appointments by Day of Week ────────────────────────────
+        body.add(DarkTheme.sectionLabel("Busiest Days of Week"));
+        body.add(Box.createRigidArea(new Dimension(0, 12)));
+        body.add(buildBarChart(
+            service.getAppointmentsByDayOfWeek(),
+            new Color(139, 92, 246), "Appointments"));
+        body.add(Box.createRigidArea(new Dimension(0, 24)));
+
+        // ── Row 4: Top Technicians ────────────────────────────────────────
+        body.add(DarkTheme.sectionLabel("Top Technicians (Completed Jobs)"));
+        body.add(Box.createRigidArea(new Dimension(0, 12)));
+        body.add(buildTechnicianChart());
+
+        JScrollPane scroll = new JScrollPane(body);
+        scroll.setBorder(null);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
+        return scroll;
+    }
+
+    // ── Bar chart (integer values) ────────────────────────────────────────────
+
+    private JPanel buildBarChart(
+            java.util.LinkedHashMap<String, Integer> data,
+            Color barColor, String unit) {
+
+        int maxVal = data.values().stream()
+            .mapToInt(Integer::intValue).max().orElse(1);
+        if (maxVal == 0) maxVal = 1;
+
+        JPanel chart = new JPanel(new BorderLayout());
+        chart.setOpaque(false);
+        chart.setAlignmentX(Component.LEFT_ALIGNMENT);
+        chart.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+
+        JPanel bars = new JPanel(new GridLayout(1, data.size(), 6, 0));
+        bars.setOpaque(false);
+
+        for (java.util.Map.Entry<String, Integer> entry : data.entrySet()) {
+            bars.add(buildBar(entry.getKey(), entry.getValue(),
+                maxVal, barColor));
+        }
+
+        chart.add(bars, BorderLayout.CENTER);
+        return chart;
+    }
+
+    private JPanel buildBar(String label, int value, int maxVal, Color color) {
+        JPanel col = new JPanel();
+        col.setOpaque(false);
+        col.setLayout(new BoxLayout(col, BoxLayout.Y_AXIS));
+
+        // Value label
+        JLabel valLbl = DarkTheme.label(String.valueOf(value),
+            new Font("Segoe UI", Font.BOLD, 11), color);
+        valLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Bar
+        double pct = (double) value / maxVal;
+        int barH = (int)(100 * pct);
+        if (barH < 2 && value > 0) barH = 2;
+
+        JPanel barContainer = new JPanel();
+        barContainer.setOpaque(false);
+        barContainer.setLayout(new BoxLayout(barContainer, BoxLayout.Y_AXIS));
+        barContainer.setPreferredSize(new Dimension(0, 110));
+
+        // Spacer on top
+        JPanel spacer = new JPanel();
+        spacer.setOpaque(false);
+        int spaceH = 100 - barH;
+        spacer.setMaximumSize(new Dimension(Integer.MAX_VALUE, spaceH));
+        spacer.setPreferredSize(new Dimension(0, spaceH));
+
+        // Actual bar
+        Color barFill = color;
+        JPanel bar = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gp = new GradientPaint(
+                    0, 0, barFill.brighter(),
+                    0, getHeight(), barFill);
+                g2.setPaint(gp);
+                g2.fillRoundRect(2, 0, getWidth()-4, getHeight(), 4, 4);
+                // Shine
+                g2.setColor(new Color(255,255,255,40));
+                g2.fillRoundRect(2, 0, getWidth()-4, getHeight()/3, 4, 4);
+                g2.dispose();
+            }
+        };
+        bar.setOpaque(false);
+        bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, barH));
+        bar.setPreferredSize(new Dimension(0, barH));
+
+        barContainer.add(spacer);
+        barContainer.add(bar);
+
+        // Label
+        JLabel nameLbl = DarkTheme.label(label,
+            new Font("Segoe UI", Font.PLAIN, 10), DarkTheme.TEXT_MUTED);
+        nameLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        col.add(valLbl);
+        col.add(barContainer);
+        col.add(nameLbl);
+        return col;
+    }
+
+    // ── Revenue bar chart (double values) ────────────────────────────────────
+
+    private JPanel buildRevenueChart(
+            java.util.LinkedHashMap<String, Double> data) {
+
+        double maxVal = data.values().stream()
+            .mapToDouble(Double::doubleValue).max().orElse(1);
+        if (maxVal == 0) maxVal = 1;
+
+        JPanel chart = new JPanel(new BorderLayout());
+        chart.setOpaque(false);
+        chart.setAlignmentX(Component.LEFT_ALIGNMENT);
+        chart.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+
+        JPanel bars = new JPanel(new GridLayout(1, data.size(), 6, 0));
+        bars.setOpaque(false);
+
+        Color barColor = DarkTheme.SUCCESS;
+        for (java.util.Map.Entry<String, Double> entry : data.entrySet()) {
+            JPanel col = new JPanel();
+            col.setOpaque(false);
+            col.setLayout(new BoxLayout(col, BoxLayout.Y_AXIS));
+
+            double pct = entry.getValue() / maxVal;
+            int barH = (int)(100 * pct);
+            if (barH < 2 && entry.getValue() > 0) barH = 2;
+
+            String valStr = entry.getValue() == 0 ? "0"
+                : String.format("%.0f", entry.getValue());
+
+            JLabel valLbl = DarkTheme.label(valStr,
+                new Font("Segoe UI", Font.BOLD, 10), barColor);
+            valLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            JPanel barContainer = new JPanel();
+            barContainer.setOpaque(false);
+            barContainer.setLayout(new BoxLayout(barContainer, BoxLayout.Y_AXIS));
+            barContainer.setPreferredSize(new Dimension(0, 110));
+
+            JPanel spacer = new JPanel();
+            spacer.setOpaque(false);
+            int spaceH = 100 - barH;
+            spacer.setMaximumSize(new Dimension(Integer.MAX_VALUE, spaceH));
+            spacer.setPreferredSize(new Dimension(0, spaceH));
+
+            Color fill = barColor;
+            JPanel bar = new JPanel() {
+                @Override protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+                    GradientPaint gp = new GradientPaint(
+                        0, 0, fill.brighter(), 0, getHeight(), fill);
+                    g2.setPaint(gp);
+                    g2.fillRoundRect(2, 0, getWidth()-4, getHeight(), 4, 4);
+                    g2.setColor(new Color(255,255,255,40));
+                    g2.fillRoundRect(2, 0, getWidth()-4, getHeight()/3, 4, 4);
+                    g2.dispose();
+                }
+            };
+            bar.setOpaque(false);
+            bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, barH));
+            bar.setPreferredSize(new Dimension(0, barH));
+
+            barContainer.add(spacer);
+            barContainer.add(bar);
+
+            JLabel nameLbl = DarkTheme.label(entry.getKey(),
+                new Font("Segoe UI", Font.PLAIN, 10), DarkTheme.TEXT_MUTED);
+            nameLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            col.add(valLbl);
+            col.add(barContainer);
+            col.add(nameLbl);
+            bars.add(col);
+        }
+
+        chart.add(bars, BorderLayout.CENTER);
+        return chart;
+    }
+
+    // ── Technician performance chart ──────────────────────────────────────────
+
+    private JPanel buildTechnicianChart() {
+        java.util.LinkedHashMap<String, Integer> data =
+            service.getTopTechnicians();
+
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
+
+        if (data.isEmpty()) {
+            JLabel empty = DarkTheme.label("No completed jobs yet.",
+                DarkTheme.FONT_SMALL, DarkTheme.TEXT_MUTED);
+            empty.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panel.add(empty);
+            return panel;
+        }
+
+        int maxVal = data.values().stream()
+            .mapToInt(Integer::intValue).max().orElse(1);
+
+        for (java.util.Map.Entry<String, Integer> entry : data.entrySet()) {
+            String name  = service.getTechnicianName(entry.getKey());
+            int    count = entry.getValue();
+            double pct   = (double) count / maxVal;
+
+            JPanel row = new JPanel(new BorderLayout(12, 0));
+            row.setOpaque(false);
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+            row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            // Name label
+            JLabel nameLbl = DarkTheme.label(
+                name + " (" + entry.getKey() + ")",
+                DarkTheme.FONT_REGULAR, DarkTheme.TEXT_WHITE);
+            nameLbl.setPreferredSize(new Dimension(200, 30));
+
+            // Progress bar track
+            JPanel track = new JPanel(new BorderLayout()) {
+                @Override protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+                    // Track
+                    g2.setColor(new Color(255, 255, 255, 15));
+                    g2.fillRoundRect(0, 8, getWidth(), 12, 6, 6);
+                    // Fill
+                    int fillW = (int)(getWidth() * pct);
+                    if (fillW > 0) {
+                        GradientPaint gp = new GradientPaint(
+                            0, 0, DarkTheme.ACCENT_BLUE.brighter(),
+                            fillW, 0, DarkTheme.ACCENT_BLUE);
+                        g2.setPaint(gp);
+                        g2.fillRoundRect(0, 8, fillW, 12, 6, 6);
+                        g2.setColor(new Color(255,255,255,50));
+                        g2.fillRoundRect(0, 8, fillW, 6, 6, 6);
+                    }
+                    g2.dispose();
+                }
+            };
+            track.setOpaque(false);
+
+            // Count label
+            JLabel countLbl = DarkTheme.label(
+                count + " jobs",
+                new Font("Segoe UI", Font.BOLD, 12),
+                DarkTheme.ACCENT_BLUE);
+            countLbl.setPreferredSize(new Dimension(60, 30));
+
+            row.add(nameLbl,  BorderLayout.WEST);
+            row.add(track,    BorderLayout.CENTER);
+            row.add(countLbl, BorderLayout.EAST);
+
+            panel.add(row);
+            panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        }
+
+        return panel;
     }
 }

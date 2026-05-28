@@ -8,7 +8,6 @@
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/ManagerService.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CounterStaff.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CounterStaffService.java</file>
-            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/TechnicianService.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Technician.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Technician_Frame_and_Dialogs.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Login_Frame.java</file>
@@ -20,6 +19,8 @@
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Manager_Frame.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CS_ManageAppointmentsDialog.java</file>
             <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CS_Dialogs.java</file>
+            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/Validator.java</file>
+            <file>file:/C:/Users/sanah/OneDrive/Desktop/apu_asc/APU-SERVICE-MANAGEMENT-SYSTEM/src/apu_asc/CS_ManageCustomersDialog.java</file>
         </group>
     </open-files>
 </project-private>

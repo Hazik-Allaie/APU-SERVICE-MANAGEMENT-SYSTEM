@@ -623,22 +623,30 @@ class Customer_FeedbackDialog {
         JButton submit = UITheme.createPrimaryButton("Submit");
         JButton cancel = UITheme.createLinkButton("Cancel");
         cancel.addActionListener(e -> dialog.dispose());
-        submit.addActionListener(e -> {
-            String apptId = fApptId.getText().trim();
-            String fb = fFeedback.getText().trim();
-            if (apptId.isEmpty() || fb.isEmpty()) {
-                status.setForeground(UITheme.ERROR);
-                status.setText("Both fields are required."); return;
-            }
-            OperationResult r = service.submitFeedback(apptId, customer.getUserid(), fb);
-            if (r.getResult()) {
-                JOptionPane.showMessageDialog(parent, r.getMessage(),
-                    "Success", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-            } else {
-                status.setForeground(UITheme.ERROR); status.setText(r.getMessage());
-            }
-        });
+       submit.addActionListener(e -> {
+    String apptId = fApptId.getText().trim();
+    String fb     = fFeedback.getText().trim();
+
+    String error = Validator.validateAll(
+        Validator.validateAppointmentId(apptId),
+        Validator.validateFeedback(fb)
+    );
+    if (error != null) {
+        status.setForeground(UITheme.ERROR);
+        status.setText(error);
+        return;
+    }
+    OperationResult r = service.submitFeedback(
+        apptId, customer.getUserid(), fb);
+    if (r.getResult()) {
+        JOptionPane.showMessageDialog(parent, r.getMessage(),
+            "Success", JOptionPane.INFORMATION_MESSAGE);
+        dialog.dispose();
+    } else {
+        status.setForeground(UITheme.ERROR);
+        status.setText(r.getMessage());
+    }
+});
 
         g.gridy=5; body.add(UITheme.buttonRow(cancel, submit), g);
         return body;
@@ -767,19 +775,30 @@ class Customer_EditProfileDialog {
         JButton cancel = UITheme.createLinkButton("Cancel");
         save.setPreferredSize(new Dimension(150, UITheme.BUTTON_H));
 
-        save.addActionListener(e -> {
-            String cur = new String(fCurrent.getPassword());
-            if (cur.isEmpty()) { setStatus("Current password is required.", false); return; }
-            int age; try { age = Integer.parseInt(fAge.getText().trim()); }
-            catch (NumberFormatException ex) { setStatus("Age must be a number.", false); return; }
-            String np = new String(fNew.getPassword());
-            if (np.isEmpty()) np = customer.getPassword();
-            OperationResult r = service.updateProfile(customer,
-                fName.getText().trim(), age, fEmail.getText().trim(),
-                fUsername.getText().trim(), cur, np, fContact.getText().trim());
-            setStatus(r.getMessage(), r.getResult());
-            if (r.getResult()) { fCurrent.setText(""); fNew.setText(""); }
-        });
+       save.addActionListener(e -> {
+    String cur = new String(fCurrent.getPassword());
+    if (cur.isEmpty()) { setStatus("Current password is required.", false); return; }
+
+    String np = new String(fNew.getPassword());
+    if (np.isEmpty()) np = customer.getPassword();
+
+    String error = Validator.validateAll(
+        Validator.validateName(fName.getText()),
+        Validator.validateAge(fAge.getText()),
+        Validator.validateEmail(fEmail.getText()),
+        Validator.validateUsername(fUsername.getText()),
+        Validator.validateContact(fContact.getText()),
+        np.equals(customer.getPassword()) ? null : Validator.validatePassword(np)
+    );
+    if (error != null) { setStatus(error, false); return; }
+
+    int age = Integer.parseInt(fAge.getText().trim());
+    OperationResult r = service.updateProfile(customer,
+        fName.getText().trim(), age, fEmail.getText().trim(),
+        fUsername.getText().trim(), cur, np, fContact.getText().trim());
+    setStatus(r.getMessage(), r.getResult());
+    if (r.getResult()) { fCurrent.setText(""); fNew.setText(""); }
+});
 
         reset.addActionListener(e -> {
             fName.setText(customer.getName()); fAge.setText(String.valueOf(customer.getAge()));
@@ -1071,26 +1090,27 @@ class Customer_ViewReceiptDialog {
         JScrollPane scroll = new JScrollPane(receiptArea);
         scroll.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
 
-        loadBtn.addActionListener(e -> {
-            String pid = fPaymentId.getText().trim();
-            if (pid.isEmpty() || pid.equals("Enter Payment ID...")) {
-                statusLabel.setForeground(UITheme.ERROR);
-                statusLabel.setText("Please enter a Payment ID.");
-                return;
-            }
-            String receipt = service.generateCustomerReceipt(
-                pid, customer.getUserid());
-            if (receipt.startsWith("Error:")) {
-                statusLabel.setForeground(UITheme.ERROR);
-                statusLabel.setText(receipt);
-                receiptArea.setText("");
-            } else {
-                statusLabel.setForeground(UITheme.SUCCESS);
-                statusLabel.setText("Receipt loaded successfully.");
-                receiptArea.setText(receipt);
-                receiptArea.setCaretPosition(0);
-            }
-        });
+       loadBtn.addActionListener(e -> {
+    String pid = fPaymentId.getText().trim();
+    String error = Validator.validatePaymentId(pid);
+    if (error != null) {
+        statusLabel.setForeground(UITheme.ERROR);
+        statusLabel.setText(error);
+        return;
+    }
+    String receipt = service.generateCustomerReceipt(
+        pid, customer.getUserid());
+    if (receipt.startsWith("Error:")) {
+        statusLabel.setForeground(UITheme.ERROR);
+        statusLabel.setText(receipt);
+        receiptArea.setText("");
+    } else {
+        statusLabel.setForeground(UITheme.SUCCESS);
+        statusLabel.setText("Receipt loaded successfully.");
+        receiptArea.setText(receipt);
+        receiptArea.setCaretPosition(0);
+    }
+});
 
         JPanel topSection = new JPanel();
         topSection.setOpaque(false);

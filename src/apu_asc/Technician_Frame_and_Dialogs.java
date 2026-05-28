@@ -741,27 +741,36 @@ class Technician_EditProfileDialog {
         save.setPreferredSize(new Dimension(150, UITheme.BUTTON_H));
 
         save.addActionListener(e -> {
-            String cur = new String(fCurrent.getPassword());
-            if (cur.isEmpty()) { setStatus("Current password is required.", false); return; }
-            if (!technician.getPassword().equals(cur)) {
-                setStatus("Current password is incorrect.", false); return;
-            }
-            int age; try { age = Integer.parseInt(fAge.getText().trim()); }
-            catch (NumberFormatException ex) { setStatus("Age must be a number.", false); return; }
-            String np = new String(fNew.getPassword());
-            if (np.isEmpty()) np = technician.getPassword();
+    String cur = new String(fCurrent.getPassword());
+    if (cur.isEmpty()) { setStatus("Current password is required.", false); return; }
+    if (!technician.getPassword().equals(cur)) {
+        setStatus("Current password is incorrect.", false); return;
+    }
 
-            technician.setName(fName.getText().trim());
-            technician.setAge(age);
-            technician.setEmail(fEmail.getText().trim());
-            technician.setUsername(fUsername.getText().trim());
-            technician.setContact(fContact.getText().trim());
-            technician.setPassword(np);
-            FileHandler.updateUser(technician);
+    String np = new String(fNew.getPassword());
+    if (np.isEmpty()) np = technician.getPassword();
 
-            setStatus("Profile updated successfully.", true);
-            fCurrent.setText(""); fNew.setText("");
-        });
+    String error = Validator.validateAll(
+        Validator.validateName(fName.getText()),
+        Validator.validateAge(fAge.getText()),
+        Validator.validateEmail(fEmail.getText()),
+        Validator.validateUsername(fUsername.getText()),
+        Validator.validateContact(fContact.getText()),
+        np.equals(technician.getPassword()) ? null : Validator.validatePassword(np)
+    );
+    if (error != null) { setStatus(error, false); return; }
+
+    int age = Integer.parseInt(fAge.getText().trim());
+    technician.setName(fName.getText().trim());
+    technician.setAge(age);
+    technician.setEmail(fEmail.getText().trim());
+    technician.setUsername(fUsername.getText().trim());
+    technician.setContact(fContact.getText().trim());
+    technician.setPassword(np);
+    FileHandler.updateUser(technician);
+    setStatus("Profile updated successfully.", true);
+    fCurrent.setText(""); fNew.setText("");
+});
 
         reset.addActionListener(e -> {
             fName.setText(technician.getName());
@@ -855,24 +864,29 @@ class Technician_FeedbackDialog {
         JButton cancel = UITheme.createLinkButton("Cancel");
         cancel.addActionListener(e -> dialog.dispose());
         submit.addActionListener(e -> {
-            String apptId   = fApptId.getText().trim();
-            String feedback = fFeedback.getText().trim();
-            if (apptId.isEmpty() || feedback.isEmpty()) {
-                status.setForeground(UITheme.ERROR);
-                status.setText("Both fields are required.");
-                return;
-            }
-            OperationResult r = service.submitJobFeedback(
-                apptId, technician.getUserid(), feedback);
-            if (r.getResult()) {
-                JOptionPane.showMessageDialog(parent, r.getMessage(),
-                    "Success", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-            } else {
-                status.setForeground(UITheme.ERROR);
-                status.setText(r.getMessage());
-            }
-        });
+    String apptId   = fApptId.getText().trim();
+    String feedback = fFeedback.getText().trim();
+
+    String error = Validator.validateAll(
+        Validator.validateAppointmentId(apptId),
+        Validator.validateFeedback(feedback)
+    );
+    if (error != null) {
+        status.setForeground(UITheme.ERROR);
+        status.setText(error);
+        return;
+    }
+    OperationResult r = service.submitJobFeedback(
+        apptId, technician.getUserid(), feedback);
+    if (r.getResult()) {
+        JOptionPane.showMessageDialog(parent, r.getMessage(),
+            "Success", JOptionPane.INFORMATION_MESSAGE);
+        dialog.dispose();
+    } else {
+        status.setForeground(UITheme.ERROR);
+        status.setText(r.getMessage());
+    }
+});
 
         g.gridy=6;
         body.add(UITheme.buttonRow(cancel, submit), g);
@@ -931,18 +945,20 @@ class Technician_JobDetailsDialog {
             BorderFactory.createEmptyBorder(16, 20, 16, 20)));
         detailCard.setVisible(false);
 
-        loadBtn.addActionListener(e -> {
-            String apptId = fApptId.getText().trim();
-            if (apptId.isEmpty()) {
-                statusLabel.setText("Please enter an Appointment ID.");
-                return;
-            }
-            Appointment a = service.getJobDetails(apptId, technician.getUserid());
-            if (a == null) {
-                statusLabel.setText("Appointment not found or not assigned to you.");
-                detailCard.setVisible(false);
-                return;
-            }
+       loadBtn.addActionListener(e -> {
+    String apptId = fApptId.getText().trim();
+    String error  = Validator.validateAppointmentId(apptId);
+    if (error != null) {
+        statusLabel.setText(error);
+        detailCard.setVisible(false);
+        return;
+    }
+    Appointment a = service.getJobDetails(apptId, technician.getUserid());
+    if (a == null) {
+        statusLabel.setText("Appointment not found or not assigned to you.");
+        detailCard.setVisible(false);
+        return;
+    }
 
             statusLabel.setText(" ");
             detailCard.removeAll();
