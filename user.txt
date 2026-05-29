@@ -1,7 +1,7 @@
-MG001,Ali Hassan,43,ali@apu.edu.my,ali,password123,0123456789,Manager
+MG001,Ali mirza,49,ali@apu.edu.my,ali_mirza,password123,0123456789,Manager
 CS001,John Smith,30,john@apu.edu.my,john,password123,0112345678,CounterStaff
 CS002,Sarah Lee,28,sarah@apu.edu.my,sarah,password123,0198765432,CounterStaff
 TC001,David Wong,35,david@apu.edu.my,david,password123,0187654321,Technician
 CU001,Ahmad Farid,25,ahmad@gmail.com,ahmad,password123,0165432109,Customer
 CU002,Nurul Ain,22,nurul@gmail.com,nurul,password123,0154321098,Customer
-CS123,HAZIK,22,hazik@gmail.com,hazik,password123,01135478593,Technician
+TS081,Hazik,26,hazik123@gmail.com,Hazik,hazik@1234,990687583372,Manager

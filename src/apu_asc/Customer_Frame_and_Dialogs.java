@@ -586,70 +586,91 @@ class Customer_FeedbackDialog {
 
     public Customer_FeedbackDialog(JFrame parent, Customer customer) {
         this.parent = parent; this.customer = customer;
-        JDialog dialog = UITheme.createDialog(parent, "Submit Feedback", 500, 340);
+        JDialog dialog = UITheme.createDialog(parent, "Submit Feedback", 500, 420);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("Submit Feedback"), BorderLayout.NORTH);
-        dialog.add(buildBody(dialog),    BorderLayout.CENTER);
+        dialog.add(buildBody(),    BorderLayout.CENTER);
+        dialog.add(buildButtons(dialog), BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
 
-    private JPanel buildBody(JDialog dialog) {
+    private JPanel buildBody() {
         JPanel body = new JPanel(new GridBagLayout());
         body.setBackground(UITheme.WHITE);
         body.setBorder(BorderFactory.createEmptyBorder(24, 28, 10, 28));
         GridBagConstraints g = new GridBagConstraints();
         g.fill = GridBagConstraints.HORIZONTAL;
-        g.insets = new Insets(8, 0, 8, 0); g.anchor = GridBagConstraints.WEST;
+        g.insets = new Insets(8, 0, 8, 0);
+        g.anchor = GridBagConstraints.WEST;
 
         JTextField fApptId = UITheme.createTextField();
         fApptId.setPreferredSize(new Dimension(400, UITheme.INPUT_H));
 
-        JTextArea fFeedback = new JTextArea(4, 30);
-        fFeedback.setFont(UITheme.FONT_REGULAR); fFeedback.setLineWrap(true);
-        fFeedback.setWrapStyleWord(true); fFeedback.setCaretColor(UITheme.ACCENT);
+        JTextArea fFeedback = new JTextArea(5, 30);
+        fFeedback.setFont(UITheme.FONT_REGULAR);
+        fFeedback.setLineWrap(true);
+        fFeedback.setWrapStyleWord(true);
+        fFeedback.setCaretColor(UITheme.ACCENT);
         JScrollPane feedbackScroll = new JScrollPane(fFeedback);
         feedbackScroll.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
+        feedbackScroll.setPreferredSize(new Dimension(400, 100));
 
-        JLabel status = UITheme.createLabel(" ", UITheme.FONT_SMALL, UITheme.TEXT_SECONDARY);
+        JLabel status = UITheme.createLabel(" ", UITheme.FONT_SMALL, UITheme.ERROR);
 
         g.gridx=0; g.gridy=0; g.gridwidth=2;
-        body.add(UITheme.createLabel("Appointment ID", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY), g);
+        body.add(UITheme.createLabel("Appointment ID",
+            UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY), g);
         g.gridy=1; body.add(fApptId, g);
         g.gridy=2;
-        body.add(UITheme.createLabel("Your Feedback", UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY), g);
+        body.add(UITheme.createLabel("Your Feedback",
+            UITheme.FONT_BOLD, UITheme.TEXT_PRIMARY), g);
         g.gridy=3; body.add(feedbackScroll, g);
         g.gridy=4; body.add(status, g);
 
+        // Store fields for use in button panel
+        body.putClientProperty("fApptId", fApptId);
+        body.putClientProperty("fFeedback", fFeedback);
+        body.putClientProperty("status", status);
+
+        return body;
+    }
+
+    private JPanel buildButtons(JDialog dialog) {
         JButton submit = UITheme.createPrimaryButton("Submit");
         JButton cancel = UITheme.createLinkButton("Cancel");
         cancel.addActionListener(e -> dialog.dispose());
-       submit.addActionListener(e -> {
-    String apptId = fApptId.getText().trim();
-    String fb     = fFeedback.getText().trim();
+        submit.addActionListener(e -> {
+            // Get the body panel to access fields
+            JPanel body = (JPanel) ((JPanel) dialog.getContentPane()
+                .getComponent(1));
+            JTextField fApptId = (JTextField) body.getClientProperty("fApptId");
+            JTextArea fFeedback = (JTextArea) body.getClientProperty("fFeedback");
+            JLabel status = (JLabel) body.getClientProperty("status");
 
-    String error = Validator.validateAll(
-        Validator.validateAppointmentId(apptId),
-        Validator.validateFeedback(fb)
-    );
-    if (error != null) {
-        status.setForeground(UITheme.ERROR);
-        status.setText(error);
-        return;
-    }
-    OperationResult r = service.submitFeedback(
-        apptId, customer.getUserid(), fb);
-    if (r.getResult()) {
-        JOptionPane.showMessageDialog(parent, r.getMessage(),
-            "Success", JOptionPane.INFORMATION_MESSAGE);
-        dialog.dispose();
-    } else {
-        status.setForeground(UITheme.ERROR);
-        status.setText(r.getMessage());
-    }
-});
+            String apptId = fApptId.getText().trim();
+            String fb     = fFeedback.getText().trim();
 
-        g.gridy=5; body.add(UITheme.buttonRow(cancel, submit), g);
-        return body;
+            String error = Validator.validateAll(
+                Validator.validateAppointmentId(apptId),
+                Validator.validateFeedback(fb)
+            );
+            if (error != null) {
+                status.setForeground(UITheme.ERROR);
+                status.setText(error);
+                return;
+            }
+            OperationResult r = service.submitFeedback(
+                apptId, customer.getUserid(), fb);
+            if (r.getResult()) {
+                JOptionPane.showMessageDialog(parent, r.getMessage(),
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+            } else {
+                status.setForeground(UITheme.ERROR);
+                status.setText(r.getMessage());
+            }
+        });
+        return UITheme.buttonRow(cancel, submit);
     }
 }
 
