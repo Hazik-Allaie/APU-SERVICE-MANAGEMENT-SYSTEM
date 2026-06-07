@@ -477,7 +477,7 @@ class Technician_AppointmentsDialog {
 
     public Technician_AppointmentsDialog(JFrame parent, Technician technician) {
         this.parent = parent; this.technician = technician;
-        JDialog dialog = UITheme.createDialog(parent, "My Appointments", 860, 540);
+        JDialog dialog = UITheme.createDialog(parent, "My Appointments", 1000, 540);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("My Appointments"), BorderLayout.NORTH);
         dialog.add(buildCenter(),        BorderLayout.CENTER);
@@ -512,7 +512,7 @@ class Technician_AppointmentsDialog {
         table = new JTable(model);
         UITheme.styleTable(table);
 
-        int[] widths = {120, 100, 90, 75, 110, 90, 140, 100};
+        int[] widths = {130, 110, 110, 80, 120, 100, 180, 120};
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 

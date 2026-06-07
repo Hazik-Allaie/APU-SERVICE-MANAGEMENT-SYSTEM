@@ -446,7 +446,7 @@ class Customer_AppointmentsDialog {
 
     public Customer_AppointmentsDialog(JFrame parent, Customer customer) {
         this.parent = parent; this.customer = customer;
-        JDialog dialog = UITheme.createDialog(parent, "My Appointments", 820, 520);
+        JDialog dialog = UITheme.createDialog(parent, "My Appointments", 1000, 520);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("My Appointments"), BorderLayout.NORTH);
         dialog.add(buildCenter(),        BorderLayout.CENTER);
@@ -471,7 +471,7 @@ class Customer_AppointmentsDialog {
         table = new JTable(model);
         UITheme.styleTable(table);
 
-        int[] widths = {120, 100, 80, 110, 90, 160, 100};
+        int[] widths = {130, 110, 110, 80, 120, 160, 180};
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
@@ -586,7 +586,7 @@ class Customer_FeedbackDialog {
 
     public Customer_FeedbackDialog(JFrame parent, Customer customer) {
         this.parent = parent; this.customer = customer;
-        JDialog dialog = UITheme.createDialog(parent, "Submit Feedback", 500, 420);
+        JDialog dialog = UITheme.createDialog(parent, "Submit Feedback", 1000, 420);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("Submit Feedback"), BorderLayout.NORTH);
         dialog.add(buildBody(),    BorderLayout.CENTER);
@@ -686,7 +686,7 @@ class Customer_PaymentHistoryDialog {
 
     public Customer_PaymentHistoryDialog(JFrame parent, Customer customer) {
         this.parent = parent; this.customer = customer;
-        JDialog dialog = UITheme.createDialog(parent, "Payment History", 780, 500);
+        JDialog dialog = UITheme.createDialog(parent, "Payment History", 1000, 500);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("Payment History"), BorderLayout.NORTH);
         dialog.add(buildCenter(),        BorderLayout.CENTER);
@@ -708,7 +708,7 @@ class Customer_PaymentHistoryDialog {
         JTable table = new JTable(model);
         UITheme.styleTable(table);
 
-        int[] widths = {100, 120, 110, 100, 100, 90, 80};
+        int[] widths = {100, 120, 110, 140, 100, 90, 80};
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
@@ -862,7 +862,7 @@ class Customer_CancelAppointmentDialog {
 
     public Customer_CancelAppointmentDialog(JFrame parent, Customer customer) {
         this.parent = parent; this.customer = customer;
-        JDialog dialog = UITheme.createDialog(parent, "Cancel Appointment", 820, 500);
+        JDialog dialog = UITheme.createDialog(parent, "Cancel Appointment", 1000, 500);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("Cancel Appointment"), BorderLayout.NORTH);
         dialog.add(buildCenter(),        BorderLayout.CENTER);
@@ -889,7 +889,7 @@ class Customer_CancelAppointmentDialog {
         table = new JTable(model);
         UITheme.styleTable(table);
 
-        int[] widths = {120, 90, 70, 110, 90, 160, 100};
+        int[] widths = {140, 130, 100, 130, 130, 180, 100};
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
@@ -981,7 +981,7 @@ class Customer_ServiceHistoryDialog {
 
     public Customer_ServiceHistoryDialog(JFrame parent, Customer customer) {
         this.parent = parent; this.customer = customer;
-        JDialog dialog = UITheme.createDialog(parent, "Service History", 860, 540);
+        JDialog dialog = UITheme.createDialog(parent, "Service History", 1000, 540);
         dialog.setLayout(new BorderLayout());
         dialog.add(UITheme.dialogHeader("Service History"), BorderLayout.NORTH);
         dialog.add(buildCenter(),        BorderLayout.CENTER);
@@ -1012,7 +1012,7 @@ class Customer_ServiceHistoryDialog {
         UITheme.styleTable(table);
         table.setRowHeight(44);
 
-        int[] widths = {110, 90, 70, 110, 90, 130, 110, 180};
+        int[] widths = {110, 120, 140, 150, 140, 130, 140, 180};
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
