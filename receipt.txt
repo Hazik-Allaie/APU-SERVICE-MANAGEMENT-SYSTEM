@@ -1,0 +1,10 @@
+=====Receipt=====
+Payment ID: PAY001
+Customer Name: Ahmad Farid	Customer ID: CU001
+Service Type: Normal
+Amount: 150.0
+Appointment Date: 2026-04-20
+Payment Date: 2026-06-10
+Payment Method: Card
+Technician Name: David Wong	Technician ID: TC001
+Vehicle Details: Toyota Vios ABC1234

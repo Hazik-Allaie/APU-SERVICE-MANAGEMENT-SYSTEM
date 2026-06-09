@@ -5,3 +5,6 @@ TC001,David Wong,35,david@apu.edu.my,david,password123,0187654321,Technician
 CU001,Ahmad Farid,25,ahmad@gmail.com,ahmad,password123,0165432109,Customer
 CU002,Nurul Ain,22,nurul@gmail.com,nurul,password123,0154321098,Customer
 TS081,Hazik,26,hazik123@gmail.com,Hazik,hazik@1234,990687583372,Manager
+CU003,Lee Wei Ming,35,leewm@gmail.com,leewm,123456,01234567890,Customer
+CU004,Priya Devi,27,priya.devi@gmail.com,priya_d,123456,01234567890,Customer
+CU005,Amirul Haziq,22,amirul.hazik@gmail.com,amirul_h,123456,01234567890,Customer
