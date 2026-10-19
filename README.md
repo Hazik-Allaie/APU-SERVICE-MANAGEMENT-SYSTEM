@@ -185,7 +185,7 @@ Documented honestly in the project report:
 |---|---|
 | **Mohammad Hazik Allaie** | Manager module (staff, pricing, feedback, reports, statistics) · Customer features (shared) |
 | **Syed Muhammad Bilal Umar** | Counter Staff module · Customer features (shared) |
-| **Sana Syed** | Technician module · Customer features (shared) |
+
 
 ---
 
